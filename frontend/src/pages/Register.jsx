@@ -1,24 +1,16 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
-const Login = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  // Show / Hide Password State
+const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
-  // Form State
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "volunteer",
   });
-  const [error, setError] = useState("");
 
-
-  // Handle Input Change
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -26,48 +18,36 @@ const Login = () => {
     });
   };
 
- const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  // Validation
-  if (!formData.email || !formData.password) {
-    setError("Please fill all fields");
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
 
-  // Clear error if valid
-  setError("");
-
-  const userData = {
-    name:
-      formData.role === "volunteer"
-        ? "Volunteer User"
-        : "NGO User",
-    role: formData.role,
-    email: formData.email,
+    console.log(formData);
   };
 
-  login(userData);
-  navigate("/dashboard");
-};
-
-
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700">
+    <div className="h-screen flex items-center justify-center bg-gradient-to-r from-green-500 to-teal-600">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-xl shadow-lg w-96 space-y-4"
       >
         <h2 className="text-2xl font-bold text-center">
-          Login
+          Register
         </h2>
 
-        {error && (
-  <p className="text-red-500 text-sm text-center">
-    {error}
-  </p>
-)}
-
+        {/* Name */}
+        <input
+          type="text"
+          name="name"
+          placeholder="Enter Name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+        />
 
         {/* Email */}
         <input
@@ -79,12 +59,10 @@ const Login = () => {
           className="w-full border p-2 rounded"
         />
 
-        {/* Password + Toggle */}
+        {/* Password */}
         <div className="relative">
           <input
-            type={
-              showPassword ? "text" : "password"
-            }
+            type={showPassword ? "text" : "password"}
             name="password"
             placeholder="Enter Password"
             value={formData.password}
@@ -97,13 +75,23 @@ const Login = () => {
             onClick={() =>
               setShowPassword(!showPassword)
             }
-            className="absolute right-2 top-2 text-sm text-blue-600"
+            className="absolute right-2 top-2 text-sm text-green-600"
           >
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
 
-        {/* Role Dropdown */}
+        {/* Confirm Password */}
+        <input
+          type={showPassword ? "text" : "password"}
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+        />
+
+        {/* Role */}
         <select
           name="role"
           value={formData.role}
@@ -116,24 +104,24 @@ const Login = () => {
           <option value="ngo">NGO</option>
         </select>
 
-        {/* Login Button */}
-        <button className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-          Login
+        {/* Button */}
+        <button className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+          Register
         </button>
 
-        {/* Register Link */}
+        {/* Login Link */}
         <p className="text-center text-sm">
-          Don’t have an account?
-          <Link
-            to="/register"
-            className="text-blue-600 ml-1 font-semibold"
+          Already have an account?
+          <a
+            href="/"
+            className="text-green-600 ml-1 font-semibold"
           >
-            Register
-          </Link>
+            Login
+          </a>
         </p>
       </form>
     </div>
   );
 };
 
-export default Login;
+export default Register;
