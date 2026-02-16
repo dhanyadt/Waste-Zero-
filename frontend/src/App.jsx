@@ -6,6 +6,9 @@ import VolunteerDashboard from "./pages/VolunteerDashboard";
 import NgoDashboard from "./pages/NgoDashboard";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
+import Register from "./pages/Register";
+
 
 
 // This router decides which dashboard to show based on role
@@ -42,6 +45,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardRouter />
+
               </ProtectedRoute>
             }
           />
@@ -65,6 +69,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/register" element={<Register />} />
 
         </Routes>
       </BrowserRouter>
