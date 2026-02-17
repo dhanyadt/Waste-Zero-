@@ -4,13 +4,12 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import NgoDashboard from "./pages/NgoDashboard";
-
-import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./pages/Register";
 
+import ProtectedRoute from "./components/ProtectedRoute";
 
 
-// This router decides which dashboard to show based on role
+// Role-based dashboard router
 const DashboardRouter = () => {
   const { user } = useAuth();
 
@@ -35,21 +34,23 @@ function App() {
       <BrowserRouter>
         <Routes>
 
-          {/* Login */}
+          {/* Login Route */}
           <Route path="/" element={<Login />} />
 
-          {/* Role-based dashboard */}
+          {/* Register Route */}
+          <Route path="/register" element={<Register />} />
+
+          {/* Role-based Dashboard */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardRouter />
-
               </ProtectedRoute>
             }
           />
 
-          {/* Direct NGO dashboard route */}
+          {/* Direct NGO Dashboard */}
           <Route
             path="/ngo-dashboard"
             element={
@@ -59,7 +60,7 @@ function App() {
             }
           />
 
-          {/* Direct Volunteer dashboard route */}
+          {/* Direct Volunteer Dashboard */}
           <Route
             path="/volunteer-dashboard"
             element={
@@ -68,7 +69,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/register" element={<Register />} />
 
         </Routes>
       </BrowserRouter>
