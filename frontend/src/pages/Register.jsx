@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { registerUser } from "../services/api";
+
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,16 +20,27 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
 
-    console.log(formData);
-  };
+  try {
+    const response = await registerUser(formData);
+
+    console.log("Registration success:", response.data);
+
+    alert("Registered successfully!");
+
+  } catch (error) {
+    console.error(error);
+    alert("Registration failed");
+  }
+};
+
 
   return (
     <div className="h-screen flex items-center justify-center bg-gradient-to-r from-green-500 to-teal-600">
