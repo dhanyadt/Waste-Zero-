@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { registerUser } from "../services/api";
-
+import { Link } from "react-router-dom";
+import "./Login.css"; // Reuse login styling
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -13,6 +16,7 @@ const Register = () => {
     role: "volunteer",
   });
 
+  // Handle Input Change
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -20,119 +24,170 @@ const Register = () => {
     });
   };
 
+  // Handle Submit
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  if (formData.password !== formData.confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
+    // Password match validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
 
-  try {
-    const response = await registerUser(formData);
+    try {
+      const response = await registerUser(formData);
 
-    console.log("Registration success:", response.data);
+      console.log("Registration success:", response.data);
 
-    alert("Registered successfully!");
+      alert("Registered successfully!");
 
-  } catch (error) {
-    console.error(error);
-    alert("Registration failed");
-  }
-};
+      // Optional → redirect to login
+      window.location.href = "/";
 
+    } catch (err) {
+      console.error("Register error:", err);
+
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Registration failed. Try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-r from-green-500 to-teal-600">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-xl shadow-lg w-96 space-y-4"
-      >
-        <h2 className="text-2xl font-bold text-center">
-          Register
-        </h2>
+    <div className="login-container">
+      <div className="login-modal">
+        <div className="modal-content">
 
-        {/* Name */}
-        <input
-          type="text"
-          name="name"
-          placeholder="Enter Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
+          {/* LEFT SECTION */}
+          <div className="left-section">
+            <div className="recycle-content">
 
-        {/* Email */}
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter Email"
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
+              <div className="recycle-icon">
+                <img src="/images/Logo.png" alt="WasteZero Logo" />
+              </div>
 
-        {/* Password */}
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
+              <div className="recycle-text">
+                <h3>WasteZero Initiative</h3>
+                <p>
+                  Together we care for the future of the next generations
+                </p>
+              </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setShowPassword(!showPassword)
-            }
-            className="absolute right-2 top-2 text-sm text-green-600"
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
+              <div className="world-recycle-day">
+                <h4>World Recycling Day</h4>
+                <p>17TH MAY</p>
+              </div>
+
+            </div>
+          </div>
+
+          {/* RIGHT SECTION */}
+          <div className="right-section">
+            <h2>Register</h2>
+            <p>Create your account to get started.</p>
+
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="login-form">
+
+              {/* Name */}
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleChange}
+                className="form-input"
+                required
+              />
+
+              {/* Email */}
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                className="form-input"
+                required
+              />
+
+              {/* Password */}
+              <div className="password-field">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Create password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="password-toggle"
+                >
+                  {showPassword ? "👁️" : "🔒"}
+                </button>
+              </div>
+
+              {/* Confirm Password */}
+              <input
+                type={showPassword ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirm password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="form-input"
+                required
+              />
+
+              {/* Role */}
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="form-input role-select"
+              >
+                <option value="volunteer">Volunteer</option>
+                <option value="ngo">NGO</option>
+              </select>
+
+              {/* Register Button */}
+              <button
+                type="submit"
+                className="continue-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? "Registering..." : "Register"}
+              </button>
+
+            </form>
+
+            <div className="register-link">
+              <p>
+                Already have an account?{" "}
+                <Link to="/" className="link">
+                  Login
+                </Link>
+              </p>
+            </div>
+
+          </div>
         </div>
-
-        {/* Confirm Password */}
-        <input
-          type={showPassword ? "text" : "password"}
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        {/* Role */}
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        >
-          <option value="volunteer">
-            Volunteer
-          </option>
-          <option value="ngo">NGO</option>
-        </select>
-
-        {/* Button */}
-        <button className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
-          Register
-        </button>
-
-        {/* Login Link */}
-        <p className="text-center text-sm">
-          Already have an account?
-          <a
-            href="/"
-            className="text-green-600 ml-1 font-semibold"
-          >
-            Login
-          </a>
-        </p>
-      </form>
+      </div>
     </div>
   );
 };
