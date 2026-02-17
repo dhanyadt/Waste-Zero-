@@ -1,0 +1,51 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Recycling arrow paths with leaf patterns -->
+  <defs>
+    <path id="leaf" d="M0,0 Q5,-5 10,0 Q5,5 0,0 Z" fill="#2E7D32"/>
+  </defs>
+  
+  <!-- Top arrow -->
+  <g transform="translate(60,20) rotate(0)">
+    <path d="M-15,0 L0,-15 L15,0 L8,0 Q20,0 25,15 L15,20 Q5,0 -8,0 Z" fill="none" stroke="#4CAF50" stroke-width="3"/>
+    <g transform="translate(-10,-5)">
+      <use href="#leaf" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(3,2)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(6,1)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(9,-1)" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(12,3)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(15,0)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(18,2)" fill="#66BB6A"/>
+    </g>
+  </g>
+  
+  <!-- Bottom right arrow -->
+  <g transform="translate(85,85) rotate(120)">
+    <path d="M-15,0 L0,-15 L15,0 L8,0 Q20,0 25,15 L15,20 Q5,0 -8,0 Z" fill="none" stroke="#4CAF50" stroke-width="3"/>
+    <g transform="translate(-10,-5)">
+      <use href="#leaf" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(3,2)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(6,1)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(9,-1)" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(12,3)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(15,0)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(18,2)" fill="#66BB6A"/>
+    </g>
+  </g>
+  
+  <!-- Bottom left arrow -->
+  <g transform="translate(35,85) rotate(240)">
+    <path d="M-15,0 L0,-15 L15,0 L8,0 Q20,0 25,15 L15,20 Q5,0 -8,0 Z" fill="none" stroke="#4CAF50" stroke-width="3"/>
+    <g transform="translate(-10,-5)">
+      <use href="#leaf" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(3,2)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(6,1)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(9,-1)" fill="#66BB6A"/>
+      <use href="#leaf" transform="translate(12,3)" fill="#4CAF50"/>
+      <use href="#leaf" transform="translate(15,0)" fill="#2E7D32"/>
+      <use href="#leaf" transform="translate(18,2)" fill="#66BB6A"/>
+    </g>
+  </g>
+  
+  <!-- Center circle -->
+  <circle cx="60" cy="60" r="8" fill="#4CAF50" opacity="0.3"/>
+</svg>
