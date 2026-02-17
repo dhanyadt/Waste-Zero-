@@ -146,3 +146,50 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+exports.getUserProfile = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+};
+
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.name = req.body.name || user.name;
+    user.skills = req.body.skills || user.skills;
+    user.location = req.body.location || user.location;
+    user.bio = req.body.bio || user.bio;
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        skills: updatedUser.skills,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
