@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-connectDB();  // 👈 must be called
+connectDB();  
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
