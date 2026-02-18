@@ -11,6 +11,12 @@ app.use(express.json());
 
 connectDB();  
 
+// Routes
+app.use("/api/auth", require("./routes/authRoutes"));
+
+app.use("/api/users", require("./routes/userRoutes"));
+
+
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
