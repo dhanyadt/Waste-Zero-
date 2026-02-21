@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, LogOut, Camera } from "lucide-react";
+import { LayoutDashboard, LogOut, Camera, Sun, Moon } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 import ProfileUploadModal from "../ui/ProfileUploadModal";
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { dashboardTheme, toggleDashboardTheme } = useTheme();
 
   return (
     <div className="hidden md:flex w-64 min-h-screen bg-slate-800 text-white flex-col p-6">
@@ -60,6 +62,16 @@ const Sidebar = () => {
 
       {/* Logout */}
       <div className="mt-auto">
+        {/* Theme Toggle */}
+        <div className="mb-4 flex items-center gap-2">
+          <button
+            onClick={() => toggleDashboardTheme()}
+            title={dashboardTheme === 'dark' ? 'Switch to light mode for dashboards' : 'Switch to dark mode for dashboards'}
+            className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+          >
+            {dashboardTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
         <button
           onClick={() => {
             logout();

@@ -6,7 +6,7 @@ import ProgressCircle from "../components/ProgressCircle";
 
 const VolunteerDashboard = () => {
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-slate-900">
       <Sidebar />
 
       <div className="flex-1 p-8 space-y-8">
@@ -54,12 +54,12 @@ const VolunteerDashboard = () => {
         </div>
 
         {/* Upcoming Cleanup Drives */}
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-lg font-semibold mb-4 text-green-700">
+        <div className="bg-white p-6 rounded-xl shadow-md dark:bg-slate-800">
+          <h3 className="text-lg font-semibold mb-4 text-green-700 dark:text-green-300">
             🚛 Upcoming Cleanup Drives
           </h3>
 
-          <ul className="space-y-3 text-gray-700">
+          <ul className="space-y-3 text-gray-700 dark:text-slate-300">
             <li>📍 Park Street – 18 Feb 2026</li>
             <li>📍 Eco Lake – 22 Feb 2026</li>
             <li>📍 City Market – 1 Mar 2026</li>

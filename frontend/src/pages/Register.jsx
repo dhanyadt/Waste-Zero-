@@ -1,7 +1,13 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -18,15 +24,32 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
-    console.log(formData);
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
+
+      // Registration successful - redirect to login
+      navigate("/");
+    } catch (error) {
+      setError(error.response?.data?.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,6 +61,13 @@ const Register = () => {
         <h2 className="text-2xl font-bold text-center">
           Register
         </h2>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+            {error}
+          </div>
+        )}
 
         {/* Name */}
         <input
@@ -101,23 +131,31 @@ const Register = () => {
           <option value="volunteer">
             Volunteer
           </option>
-          <option value="ngo">NGO</option>
+          <option value="NGO">NGO</option>
         </select>
 
         {/* Button */}
-        <button className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
-          Register
+        <button 
+          type="submit"
+          disabled={isLoading}
+          className={`w-full text-white p-2 rounded transition ${
+            isLoading 
+              ? "bg-gray-400 cursor-not-allowed" 
+              : "bg-green-500 hover:bg-green-600"
+          }`}
+        >
+          {isLoading ? "Registering..." : "Register"}
         </button>
 
         {/* Login Link */}
         <p className="text-center text-sm">
           Already have an account?
-          <a
-            href="/"
+          <Link
+            to="/"
             className="text-green-600 ml-1 font-semibold"
           >
             Login
-          </a>
+          </Link>
         </p>
       </form>
     </div>

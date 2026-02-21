@@ -71,15 +71,15 @@ const ProfileUploadModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl transform transition-all">
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl transform transition-all">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800">Update Profile Picture</h3>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Update Profile Picture</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-300" />
           </button>
         </div>
 
@@ -102,7 +102,7 @@ const ProfileUploadModal = ({ isOpen, onClose }) => {
               <Camera className="w-4 h-4" />
             </button>
           </div>
-          <p className="mt-4 text-sm text-gray-500">
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-300">
             {preview ? "Preview of your new profile picture" : "Click the camera icon to upload a new picture"}
           </p>
         </div>

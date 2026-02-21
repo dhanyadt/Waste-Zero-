@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 import Login from "./pages/Login";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import NgoDashboard from "./pages/NgoDashboard";
+import RoleSelection from "./pages/RoleSelection";
+import BioSetup from "./pages/BioSetup";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
 import Register from "./pages/Register";
 
 
@@ -17,11 +19,13 @@ const DashboardRouter = () => {
 
   if (!user) return <Navigate to="/" />;
 
-  if (user.role === "ngo") {
+  const userRole = user.role?.toLowerCase() || "volunteer";
+
+  if (userRole === "ngo") {
     return <NgoDashboard />;
   }
 
-  if (user.role === "volunteer") {
+  if (userRole === "volunteer") {
     return <VolunteerDashboard />;
   }
 
@@ -32,12 +36,33 @@ const DashboardRouter = () => {
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
 
           {/* Login */}
           <Route path="/" element={<Login />} />
+
+          {/* Role Selection after login */}
+          <Route
+            path="/role-selection"
+            element={
+              <ProtectedRoute>
+                <RoleSelection />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Bio Setup */}
+          <Route
+            path="/bio-setup"
+            element={
+              <ProtectedRoute>
+                <BioSetup />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Role-based dashboard */}
           <Route
@@ -54,7 +79,7 @@ function App() {
           <Route
             path="/ngo-dashboard"
             element={
-              <ProtectedRoute role="ngo">
+              <ProtectedRoute>
                 <NgoDashboard />
               </ProtectedRoute>
             }
@@ -64,7 +89,7 @@ function App() {
           <Route
             path="/volunteer-dashboard"
             element={
-              <ProtectedRoute role="volunteer">
+              <ProtectedRoute>
                 <VolunteerDashboard />
               </ProtectedRoute>
             }
@@ -74,6 +99,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

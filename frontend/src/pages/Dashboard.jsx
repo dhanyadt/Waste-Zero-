@@ -6,7 +6,7 @@ import ProgressCircle from "../components/ProgressCircle";
 
 const Dashboard = () => {
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-slate-900">
       <Sidebar />
 
       <div className="flex-1 p-8 space-y-8">

@@ -3,6 +3,44 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const generateToken = require("../utils/generateToken");
 
+// Mock social login for development: creates/finds a demo user and issues a JWT
+exports.socialAuth = async (req, res) => {
+  try {
+    // provider will be passed via req.params.provider (e.g., 'google')
+    const provider = req.params.provider || "google";
+
+    // Use a predictable demo email per provider for development
+    const email = `${provider}.user@wastezero.dev`;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // create a lightweight user for dev flows
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+        email,
+        password: hashedPassword,
+        role: "volunteer",
+        isVerified: true,
+      });
+    }
+
+    // generate token
+    const token = generateToken(user._id);
+
+    // Redirect to frontend with token in query string so frontend can pick it up
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    return res.redirect(`${frontendUrl}/?token=${token}`);
+  } catch (error) {
+    console.error("Social auth error:", error);
+    return res.status(500).json({ success: false, message: "Social auth failed" });
+  }
+};
+
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -61,22 +99,15 @@ exports.registerUser = async (req, res) => {
       role,
     });
 
-    // 8️⃣ Generate JWT
-    const token = generateToken(user._id);
-
-    // 9️⃣ Send response (NO password)
+    // 8️⃣ Send response
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      token,
+      message: "Registration successful! Please login with your credentials.",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        skills: user.skills,
-        location: user.location,
-        bio: user.bio,
       },
     });
   } catch (error) {
@@ -88,6 +119,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// Login user
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -131,14 +163,60 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        bio: user.bio,
         skills: user.skills,
         location: user.location,
-        bio: user.bio,
       },
     });
-
   } catch (error) {
     console.error("Login Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// Get user profile
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Get Profile Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// Update user profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { name, location, bio, skills } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (location) updateData.location = location;
+    if (bio) updateData.bio = bio;
+    if (skills) updateData.skills = skills;
+
+    const user = await User.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+    }).select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",

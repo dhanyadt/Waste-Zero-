@@ -60,11 +60,13 @@ const ChartCard = () => {
 
   const { data, title } = getChartData();
 
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md h-80">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md h-80">
       {/* Header with time period selector */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <h3 className="text-lg font-semibold text-green-700">{title}</h3>
+        <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">{title}</h3>
         
         {/* Time period selector buttons */}
         <div className="flex gap-2 mt-2 sm:mt-0">
@@ -73,7 +75,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "weekly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600"
             }`}
           >
             Weekly
@@ -83,7 +85,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "monthly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600"
             }`}
           >
             Monthly
@@ -93,7 +95,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "yearly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600"
             }`}
           >
             Yearly
@@ -104,7 +106,7 @@ const ChartCard = () => {
       {/* Chart */}
       <ResponsiveContainer width="100%" height="80%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1f2937' : '#e5e7eb'} />
 
           <XAxis 
             dataKey="period" 
@@ -119,10 +121,11 @@ const ChartCard = () => {
 
           <Tooltip
             contentStyle={{
-              backgroundColor: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              backgroundColor: isDark ? '#0f172a' : '#fff',
+              color: isDark ? '#e5e7eb' : '#111827',
+              border: `1px solid ${isDark ? '#111827' : '#e5e7eb'}`,
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             }}
           />
 
