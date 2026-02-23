@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+<<<<<<< HEAD
 import { Facebook } from "lucide-react";
 
 // Simple SVG for Google and Apple logos to avoid new deps
@@ -18,31 +19,50 @@ const AppleIcon = ({ className = "w-5 h-5" }) => (
     <path d="M16.365 1.43c0 1.02-.39 2.02-1.1 2.76-.7.74-1.82 1.56-3.03 1.36-.07-1.05.37-2.18 1.08-2.93.73-.78 1.91-1.43 3.05-1.19zM12.7 6.5c1.85-.02 3.39 1.06 4.25 1.06.9 0 2.24-1.03 3.73-1.03.45 0 1.11.15 1.11.15-1.01 1.13-1.75 2.77-1.75 4.47 0 3.27 2.78 5.47 2.78 5.47-.49 1.55-1.52 3.13-2.78 3.99-1.78 1.2-3.11 1.21-3.97 1.21-1.05 0-1.63-.49-3.04-.49-1.39 0-2 .49-3.05.49-.86 0-2.24 0-4.02-1.21-1.38-.86-2.4-2.43-2.9-3.99 0 0 2.78-1.89 2.78-5.47 0-1.7-.74-3.34-1.75-4.47 0 0 .66-.21 1.11-.21 1.5 0 2.84 1.06 3.74 1.06.85 0 2.39-1.09 4.24-1.11z" />
   </svg>
 );
+=======
+import "./Login.css";
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // Show / Hide Password State
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
 
   // Form State
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+=======
+  const [formData, setFormData] = useState({ email: "", password: "" });
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
   const [error, setError] = useState("");
 
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Handle Input Change
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    if (!formData.email || !formData.password) { setError("Please fill all fields"); setIsLoading(false); return; }
+    setError("");
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+      const data = await response.json();
+      if (!response.ok) { setError(data.message || "Login failed"); return; }
+      localStorage.setItem("token", data.token);
+      login(data.user);
+      navigate("/dashboard");
+    } catch { setError("Login failed. Please try again."); }
+    finally { setIsLoading(false); }
   };
 
+<<<<<<< HEAD
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -86,9 +106,33 @@ const Login = () => {
           <div className="mx-auto mb-6 w-24 h-24 bg-white/20 rounded-full flex items-center justify-center text-4xl font-bold">♻️</div>
           <h1 className="text-3xl font-bold text-white mb-2">WasteZero Initiative</h1>
           <p className="text-white/90">Together we care for the future of the next generations</p>
+=======
+  const handleSocialLogin = (provider) => {
+    login({ name: `${provider} User`, role: "volunteer", email: `user@${provider.toLowerCase()}.com` });
+    navigate("/dashboard");
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="lc-left">
+          <div className="lc-left-glow" />
+          <div className="lc-brand">
+            <div className="lc-logo-wrap">
+              <img src="/images/Logo.png" alt="WasteZero Logo" />
+            </div>
+            <h3>WasteZero Initiative</h3>
+            <p>Together we care for the future of the next generations</p>
+          </div>
+          <div className="lc-day">
+            <span>World Recycling Day</span>
+            <strong>17TH MAY</strong>
+          </div>
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Right panel (form) */}
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
@@ -189,6 +233,26 @@ const Login = () => {
             Don’t have an account?{' '}
             <Link to="/register" className="text-green-600 font-semibold">Register</Link>
           </p>
+=======
+        <div className="lc-right">
+          <h2>Login</h2>
+          <p>Enter your details to log in.</p>
+          {error && <div className="lc-error">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="lc-field">
+              <input type="email" name="email" placeholder="Enter your email" value={formData.email} onChange={handleChange} className="lc-input" required />
+            </div>
+            <div className="lc-field">
+              <input type={showPassword ? "text" : "password"} name="password" placeholder="Enter your password" value={formData.password} onChange={handleChange} className="lc-input" style={{ paddingRight: "44px" }} required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="lc-eye">{showPassword ? "👁️" : "🔒"}</button>
+            </div>
+            <button type="submit" className="lc-submit" disabled={isLoading}>{isLoading ? "Logging in…" : "Continue"}</button>
+          </form>
+          <div className="lc-divider">OR</div>
+          
+          <p className="lc-register-link">Don't have an account? <Link to="/register" className="lc-link">Register</Link></p>
+          <p className="lc-terms">By continuing, you agree to the updated <a href="/terms" className="lc-link">Terms of Sale</a>, <a href="/terms" className="lc-link">Terms of Service</a>, and <a href="/privacy" className="lc-link">Privacy Policy</a>.</p>
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
         </div>
       </div>
     </div>

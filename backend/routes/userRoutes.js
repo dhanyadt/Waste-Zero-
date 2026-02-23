@@ -1,52 +1,55 @@
 const express = require("express");
 const router = express.Router();
+
 const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
-// Get NGO Dashboard Data
-router.get("/ngo-dashboard", authMiddleware, (req, res) => {
-  // For now, return mock data - can be connected to database later
-  res.status(200).json({
+router.get("/me", authMiddleware, (req, res) => {
+  res.json({
     success: true,
-    data: {
-      organizationName: req.user.name || "WasteZero Partner NGO",
-      email: req.user.email,
-      location: "Kolkata, India",
-      joinedDate: "Feb 2026",
-      opportunities: [],
-      stats: {
-        totalOpportunities: 0,
-        totalVolunteers: 0,
-        totalImpact: 0,
-      },
-    },
+    user: req.user,
   });
 });
 
-// Get Volunteer Dashboard Data
-router.get("/volunteer-dashboard", authMiddleware, (req, res) => {
-  // For now, return mock data - can be connected to database later
-  res.status(200).json({
-    success: true,
-    data: {
-      name: req.user.name,
-      email: req.user.email,
-      bio: req.user.bio || "",
-      skills: req.user.skills || [],
-      location: req.user.location || "",
-      stats: {
-        pickupsCompleted: 124,
-        kgRecycled: 850,
-        pendingRequests: 6,
-        sustainabilityScore: 78,
+// NGO only route
+router.get("/ngo-dashboard", authMiddleware, roleMiddleware("NGO"), (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: "Welcome NGO",
+      user: req.user,
+      dashboard: {
+        name: req.user.name,
+        role: req.user.role,
+        email: req.user.email,
+        skills: req.user.skills,
+        location: req.user.location,
+        bio: req.user.bio,
       },
-      upcomingDrives: [
-        { id: 1, location: "Park Street", date: "18 Feb 2026" },
-        { id: 2, location: "Eco Lake", date: "22 Feb 2026" },
-        { id: 3, location: "City Market", date: "1 Mar 2026" },
-      ],
-      applications: [],
-    },
-  });
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard",
+    });
+  }
 });
+
+// Volunteer dashboard
+router.get("/volunteer-dashboard",authMiddleware,roleMiddleware("volunteer"),async (req, res) => {
+    try {
+      res.json({
+        success: true,
+        message: "Volunteer dashboard data fetched successfully",
+        user: req.user,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to load dashboard",
+      });
+    }
+  }
+);
 
 module.exports = router;

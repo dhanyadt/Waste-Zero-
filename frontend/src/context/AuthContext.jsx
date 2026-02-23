@@ -6,8 +6,15 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
+<<<<<<< HEAD
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+=======
+  const updateUser = (updatedUserData) => {
+  setUser(updatedUserData);
+  localStorage.setItem("user", JSON.stringify(updatedUserData));
+};
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
 
 
   useEffect(() => {
@@ -80,9 +87,10 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-  };
+  setUser(null);
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+};
 
 
   // Update profile picture
@@ -131,6 +139,7 @@ export const AuthProvider = ({ children }) => {
 
 
   return (
+<<<<<<< HEAD
     <AuthContext.Provider
       value={{
         user,
@@ -144,6 +153,18 @@ export const AuthProvider = ({ children }) => {
         updateAvailability,
       }}
     >
+=======
+   <AuthContext.Provider
+  value={{
+    user,
+    login,
+    logout,
+    updateUser,            // 🔥 ADD THIS
+    updateProfilePicture,
+    updateAvailability,
+  }}
+>
+>>>>>>> e951827d6ab3baa7e3574f9def12f976dc6651a5
       {children}
     </AuthContext.Provider>
   );

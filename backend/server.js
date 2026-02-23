@@ -11,8 +11,13 @@ app.use(express.json());
 
 connectDB();  // 👈 must be called
 
+
+require("./config/passport");
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
+
+app.use("/api/users", require("./routes/userRoutes"));
+
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
