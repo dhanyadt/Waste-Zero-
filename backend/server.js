@@ -11,6 +11,8 @@ app.use(express.json());
 
 connectDB();  // 👈 must be called
 
+
+require("./config/passport");
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 
