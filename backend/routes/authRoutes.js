@@ -9,8 +9,10 @@ const {
   registerUser,
   loginUser,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  changePassword
 } = require("../controllers/authController");
+
 
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -53,6 +55,10 @@ router.get(
 
   }
 );
+
+
+router.put("/change-password", authMiddleware, changePassword);
+
 
 
 

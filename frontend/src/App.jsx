@@ -1,74 +1,69 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuth, AuthProvider } from "./context/AuthContext";
 
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import NgoDashboard from "./pages/NgoDashboard";
-
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Register from "./pages/Register";
 
-
-
-// This router decides which dashboard to show based on role
+/* --------------------------------------------------
+   Role-Based Dashboard Component
+-------------------------------------------------- */
 const DashboardRouter = () => {
   const { user } = useAuth();
 
   if (!user) return <Navigate to="/" />;
 
-  if (user.role === "ngo") {
-    return <NgoDashboard />;
-  }
+  const role = user.role?.toLowerCase();
 
-  if (user.role === "volunteer") {
+  if (role === "volunteer") {
     return <VolunteerDashboard />;
   }
 
-  // fallback
-  return <VolunteerDashboard />;
+  if (role === "ngo") {
+    return <NgoDashboard />;
+  }
+
+  return <Navigate to="/" />;
 };
 
-
+/* --------------------------------------------------
+   Main App Component
+-------------------------------------------------- */
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
 
-          {/* Login */}
+          {/* Public Routes */}
           <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-          {/* Role-based dashboard */}
+          {/* Protected Dashboard */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardRouter />
-
               </ProtectedRoute>
             }
           />
 
-          {/* Direct NGO dashboard route */}
+          {/* Protected Profile */}
           <Route
-            path="/ngo-dashboard"
+            path="/profile"
             element={
-              <ProtectedRoute role="ngo">
-                <NgoDashboard />
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
 
-          {/* Direct Volunteer dashboard route */}
-          <Route
-            path="/volunteer-dashboard"
-            element={
-              <ProtectedRoute role="volunteer">
-                <VolunteerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/register" element={<Register />} />
+          {/* Catch All */}
+          <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
       </BrowserRouter>

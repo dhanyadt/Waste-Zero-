@@ -6,6 +6,10 @@ export const AuthProvider = ({ children }) => {
 
   // user state
   const [user, setUser] = useState(null);
+  const updateUser = (updatedUserData) => {
+  setUser(updatedUserData);
+  localStorage.setItem("user", JSON.stringify(updatedUserData));
+};
 
 
   // Load user from localStorage on app start
@@ -28,9 +32,10 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-  };
+  setUser(null);
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+};
 
 
   // Update profile picture
@@ -64,15 +69,16 @@ export const AuthProvider = ({ children }) => {
 
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        updateProfilePicture,
-        updateAvailability,
-      }}
-    >
+   <AuthContext.Provider
+  value={{
+    user,
+    login,
+    logout,
+    updateUser,            // 🔥 ADD THIS
+    updateProfilePicture,
+    updateAvailability,
+  }}
+>
       {children}
     </AuthContext.Provider>
   );
