@@ -1,5 +1,55 @@
-import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
+
+/* -------------------- SIDEBAR -------------------- */
+
+const Sidebar = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="w-64 bg-blue-600 text-white min-h-screen flex flex-col">
+
+      {/* NGO Profile Section */}
+      <div className="p-6 border-b border-blue-500 text-center">
+        <div className="w-14 h-14 mx-auto rounded-full bg-white text-blue-600 flex items-center justify-center text-xl font-bold">
+          {user?.name?.charAt(0)?.toUpperCase() || "N"}
+        </div>
+
+        <h3 className="mt-3 font-semibold">
+          {user?.name || "Partner NGO"}
+        </h3>
+
+        <p className="text-sm text-blue-200">
+          Environmental Partner
+        </p>
+      </div>
+
+      {/* Navigation */}
+      <ul className="mt-6 space-y-2 px-4 flex-1">
+
+        {/* Active */}
+        <li className="bg-blue-700 rounded-lg px-4 py-2 cursor-pointer transition">
+          🏠 Dashboard
+        </li>
+
+        <li className="hover:bg-blue-700 rounded-lg px-4 py-2 cursor-pointer transition">
+          📢 Opportunities
+        </li>
+
+        <li className="hover:bg-blue-700 rounded-lg px-4 py-2 cursor-pointer transition">
+          👥 Volunteers
+        </li>
+
+        <li className="hover:bg-blue-700 rounded-lg px-4 py-2 cursor-pointer transition">
+          ⚙️ Profile
+        </li>
+
+      </ul>
+
+    </div>
+  );
+};
+
+/* -------------------- NGO DASHBOARD -------------------- */
 
 const NgoDashboard = () => {
   const { user } = useAuth();
@@ -147,4 +197,4 @@ const NgoDashboard = () => {
   );
 };
 
-export default NgoDashboard;
+export default NgoDashboard
