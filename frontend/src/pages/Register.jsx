@@ -132,7 +132,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "", role: "volunteer" });
+  const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "", role: "volunteer"   });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -210,7 +210,7 @@ const Register = () => {
               <label style={S.label}>Role</label>
               <select name="role" value={formData.role} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.select}>
                 <option value="volunteer">Volunteer</option>
-                <option value="ngo">NGO</option>
+                <option value="NGO">NGO</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
