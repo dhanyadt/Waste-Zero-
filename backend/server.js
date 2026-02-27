@@ -22,7 +22,7 @@ connectDB();
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-
+app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });

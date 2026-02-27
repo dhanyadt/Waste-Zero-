@@ -7,34 +7,43 @@ const opportunitySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     description: {
       type: String,
       required: true,
     },
+
     requiredSkills: {
       type: [String],
       default: [],
     },
+
     duration: {
       type: String,
       default: "",
     },
+
     location: {
       type: String,
       default: "",
     },
+
     status: {
       type: String,
       enum: ["open", "closed"],
       default: "open",
     },
-    ngo: {
+
+    // 🔐 NGO who created this opportunity
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 module.exports = mongoose.model("Opportunity", opportunitySchema);
