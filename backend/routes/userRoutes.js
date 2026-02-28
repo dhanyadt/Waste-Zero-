@@ -55,25 +55,21 @@ router.get("/volunteer-dashboard",authMiddleware,roleMiddleware("volunteer"),asy
 router.put("/set-role", authMiddleware, async (req, res) => {
   try {
     const { role } = req.body;
+    const normalizedRole = role.toLowerCase(); 
 
-    if (!["volunteer", "NGO"].includes(role)) {
+    if (!["volunteer", "ngo"].includes(normalizedRole)) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
     const user = await User.findById(req.user._id);
-
-    user.role = role;
+    user.role = normalizedRole;
     await user.save();
 
-    res.json({
-      success: true,
-      message: "Role updated successfully",
-      role: user.role,
-    });
+    res.json({ success: true, message: "Role updated", role: user.role });
   } catch (error) {
+    console.error("Set role error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;

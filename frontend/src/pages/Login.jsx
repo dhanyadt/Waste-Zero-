@@ -11,6 +11,8 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
+
+
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -47,16 +49,8 @@ const Login = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    const userData = {
-      name: `${provider} User`,
-      role: "volunteer",
-      email: `user@${provider.toLowerCase()}.com`,
-    };
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", "demo-token");
-    updateUser(userData);
-    navigate("/dashboard");
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
@@ -117,7 +111,44 @@ const Login = () => {
             </button>
           </form>
           <div className="lc-divider">OR</div>
-
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              marginBottom: "10px",
+              border: "1.5px solid #e0e0e0",
+              borderRadius: "11px",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#3c3c3c",
+              background: "#ffffff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              transition: "box-shadow 0.2s, background 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.boxShadow = "0 3px 10px rgba(0,0,0,0.15)";
+              e.target.style.background = "#f7f7f7";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.boxShadow = "0 1px 4px rgba(0,0,0,0.1)";
+              e.target.style.background = "#ffffff";
+            }}
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              style={{ width: "20px", height: "20px" }}
+            />
+            Continue with Google
+          </button>
           <p className="lc-register-link">
             Don't have an account?{" "}
             <Link to="/register" className="lc-link">

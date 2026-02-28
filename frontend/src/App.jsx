@@ -7,6 +7,8 @@ import VolunteerDashboard from "./pages/VolunteerDashboard";
 import NgoDashboard from "./pages/NgoDashboard";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuthCallback from "./pages/AuthCallback";
+import SelectRole from "./pages/SelectRole";
 
 /* --------------------------------------------------
    Role-Based Dashboard Component
@@ -60,6 +62,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/select-role" element={<SelectRole />} />
 
           {/* Catch All */}
           <Route path="*" element={<Navigate to="/" />} />

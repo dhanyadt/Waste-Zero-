@@ -22,6 +22,8 @@ passport.use(
             email: profile.emails[0].value,
             profilePic: profile.photos[0].value,
             role: null,
+            password: "google-oauth-no-password", 
+            username: profile.emails[0].value.split("@")[0],
           });
         }
 

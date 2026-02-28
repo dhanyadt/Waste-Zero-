@@ -17,17 +17,17 @@ const userSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      required: true,
+      required: false,
     },
 
     password: {
       type: String,
-      required: true,
+      required: false,
     },
 
     role: {
       type: String,
-      enum: ["volunteer", "ngo", "admin"],
+      enum: ["volunteer", "ngo", "NGO", "admin"],
       default: null,
     },
 

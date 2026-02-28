@@ -8,72 +8,51 @@ const {
   loginUser,
   getUserProfile,
   updateUserProfile,
-  changePassword
+  changePassword,
 } = require("../controllers/authController");
 
-
-
 const authMiddleware = require("../middleware/authMiddleware");
+
+// Normal Auth Routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
 router.get("/me", authMiddleware, getUserProfile);
 router.put("/me", authMiddleware, updateUserProfile);
-
-
 router.put("/change-password", authMiddleware, changePassword);
+
+// ================= GOOGLE AUTH =================
 
 // Step 1: Redirect to Google
 router.get(
   "/google",
-  (req, res, next) => {
-    console.log("Google route hit");
-    next();
-  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
   }),
 );
 
-// Step 2: Callback
+// Step 2: Google Callback
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false }),
   (req, res) => {
-
     const token = generateToken(req.user._id);
+    const requireRole = !req.user.role;
 
-    // 🔥 If role not selected yet
-    if (!req.user.role) {
-      return res.json({
-        message: "Role not selected",
-        requireRoleSelection: true,
-        token,
-        user: {
-          id: req.user._id,
-          name: req.user.name,
-          email: req.user.email,
-          profilePic: req.user.profilePic
-        }
-      });
-    }
-
-    // ✅ If role already selected
-    res.json({
-      message: "Google login successful",
-      requireRoleSelection: false,
-      token,
-      user: {
+    const userData = encodeURIComponent(
+      JSON.stringify({
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
-        role: req.user.role,
-        profilePic: req.user.profilePic
-      }
-    });
+        profilePic: req.user.profilePic,
+        role: req.user.role || null,
+      }),
+    );
 
-  }
+    res.redirect(
+      `http://localhost:5173/auth/callback?token=${token}&requireRole=${requireRole}&user=${userData}`,
+    );
+  },
 );
-
 
 module.exports = router;
