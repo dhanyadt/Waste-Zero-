@@ -133,7 +133,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "", role: "volunteer" });
+  const [formData, setFormData] = useState({ name: "", email: "", username: "", password: "", confirmPassword: "", role: "volunteer"   });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -176,19 +176,109 @@ const Register = () => {
     <div style={pageStyle}>
       <div style={S.card}>
         <div style={S.left}>
-          <div style={S.ring(360,360,"-100px","-100px",undefined,undefined,".04")} />
-          <div style={S.ring(220,220,undefined,undefined,"-60px","-60px",".03")} />
-          <div style={{ position: "absolute", width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle, rgba(129,199,132,.2) 0%, transparent 70%)", top: "35%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }} />
+          <div
+            style={S.ring(
+              360,
+              360,
+              "-100px",
+              "-100px",
+              undefined,
+              undefined,
+              ".04",
+            )}
+          />
+          <div
+            style={S.ring(
+              220,
+              220,
+              undefined,
+              undefined,
+              "-60px",
+              "-60px",
+              ".03",
+            )}
+          />
+          <div
+            style={{
+              position: "absolute",
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(129,199,132,.2) 0%, transparent 70%)",
+              top: "35%",
+              left: "50%",
+              transform: "translate(-50%,-50%)",
+              pointerEvents: "none",
+            }}
+          />
           <div style={S.logoWrap}>
-            <img src="/images/Logo.png" alt="WasteZero" style={{ width: 58, height: 58, objectFit: "contain", animation: "spin 22s linear infinite", filter: "drop-shadow(0 2px 8px rgba(0,0,0,.3))" }} />
+            <img
+              src="/images/Logo.png"
+              alt="WasteZero"
+              style={{
+                width: 58,
+                height: 58,
+                objectFit: "contain",
+                animation: "spin 22s linear infinite",
+                filter: "drop-shadow(0 2px 8px rgba(0,0,0,.3))",
+              }}
+            />
           </div>
           <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-            <h3 style={{ fontFamily: serif, fontSize: 24, fontWeight: 800, marginBottom: 10, textShadow: "0 2px 8px rgba(0,0,0,.3)" }}>WasteZero</h3>
-            <p style={{ fontSize: 13, opacity: .8, lineHeight: 1.7, maxWidth: 190 }}>Connect with volunteers and NGOs to make recycling a reality.</p>
+            <h3
+              style={{
+                fontFamily: serif,
+                fontSize: 24,
+                fontWeight: 800,
+                marginBottom: 10,
+                textShadow: "0 2px 8px rgba(0,0,0,.3)",
+              }}
+            >
+              WasteZero
+            </h3>
+            <p
+              style={{
+                fontSize: 13,
+                opacity: 0.8,
+                lineHeight: 1.7,
+                maxWidth: 190,
+              }}
+            >
+              Connect with volunteers and NGOs to make recycling a reality.
+            </p>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,.15)", paddingTop: 18, textAlign: "center", width: "100%", position: "relative", zIndex: 1 }}>
-            <p style={{ fontSize: 10.5, letterSpacing: "2.5px", textTransform: "uppercase", opacity: .55, marginBottom: 6 }}>Connect · Collect · Impact</p>
-            <p style={{ fontSize: 13, color: T.gLight, fontWeight: 600, textShadow: "0 0 16px rgba(129,199,132,.4)" }}>Join the Recycling Revolution</p>
+          <div
+            style={{
+              borderTop: "1px solid rgba(255,255,255,.15)",
+              paddingTop: 18,
+              textAlign: "center",
+              width: "100%",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10.5,
+                letterSpacing: "2.5px",
+                textTransform: "uppercase",
+                opacity: 0.55,
+                marginBottom: 6,
+              }}
+            >
+              Connect · Collect · Impact
+            </p>
+            <p
+              style={{
+                fontSize: 13,
+                color: T.gLight,
+                fontWeight: 600,
+                textShadow: "0 0 16px rgba(129,199,132,.4)",
+              }}
+            >
+              Join the Recycling Revolution
+            </p>
           </div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
@@ -196,7 +286,9 @@ const Register = () => {
         <div style={S.right}>
           <div style={S.rightGlow} />
           <div style={S.tabs}>
-            <button style={S.tab(false)} onClick={() => navigate("/")}>Login</button>
+            <button style={S.tab(false)} onClick={() => navigate("/")}>
+              Login
+            </button>
             <button style={S.tab(true)}>Register</button>
           </div>
           <h2 style={S.h2}>Create a new account</h2>
@@ -205,42 +297,92 @@ const Register = () => {
 
           <form onSubmit={handleSubmit}>
             <div style={S.grid2}>
-              <div><label style={S.label}>Full Name</label>{inp("name","Your full name")}</div>
-              <div><label style={S.label}>Email</label>{inp("email","Your email","email")}</div>
+              <div>
+                <label style={S.label}>Full Name</label>
+                {inp("name", "Your full name")}
+              </div>
+              <div>
+                <label style={S.label}>Email</label>
+                {inp("email", "Your email", "email")}
+              </div>
             </div>
             <div style={S.field}>
               <label style={S.label}>Username</label>
-              {inp("username","Choose a username")}
+              {inp("username", "Choose a username")}
             </div>
             <div style={S.grid2}>
               <div>
                 <label style={S.label}>Password</label>
                 <div style={S.pwWrap}>
-                  {inp("password","Create a password","password",{ paddingRight: 40 })}
-                  <button type="button" style={S.eyeBtn} onClick={() => setShowPassword(!showPassword)}>{showPassword ? "👁️" : "🔒"}</button>
+                  {inp(
+                    "password",
+                    "Create a password",
+                    showPassword ? "text" : "password",
+                    { paddingRight: "40px" },
+                  )}
+                  <button
+                    type="button"
+                    style={S.eyeBtn}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? "👁️" : "🔒"}
+                  </button>
                 </div>
               </div>
               <div>
                 <label style={S.label}>Confirm Password</label>
-                {inp("confirmPassword","Confirm your password", showPassword ? "text" : "password")}
+                {inp(
+                  "confirmPassword",
+                  "Confirm your password",
+                  showPassword ? "text" : "password",
+                )}
               </div>
             </div>
             <div style={S.field}>
               <label style={S.label}>Role</label>
-              <select name="role" value={formData.role} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.select}>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                onFocus={focusOn}
+                onBlur={focusOff}
+                style={S.select}
+              >
                 <option value="volunteer">Volunteer</option>
                 <option value="NGO">NGO</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
-            <button type="submit" style={S.btn(isLoading)} disabled={isLoading}
-              onMouseEnter={e => { if(!isLoading){ e.target.style.opacity=".9"; e.target.style.transform="translateY(-2px)"; }}}
-              onMouseLeave={e => { e.target.style.opacity="1"; e.target.style.transform="translateY(0)"; }}>
+            <button
+              type="submit"
+              style={S.btn(isLoading)}
+              disabled={isLoading}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.target.style.opacity = ".9";
+                  e.target.style.transform = "translateY(-2px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = "1";
+                e.target.style.transform = "translateY(0)";
+              }}
+            >
               {isLoading ? "Creating account…" : "Create Account"}
             </button>
           </form>
-          <p style={{ textAlign: "center", fontSize: "13.5px", color: T.textSoft, position: "relative" }}>
-            Already have an account?{" "}<Link to="/" style={S.link}>Login</Link>
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: "13.5px",
+              color: T.textSoft,
+              position: "relative",
+            }}
+          >
+            Already have an account?{" "}
+            <Link to="/" style={S.link}>
+              Login
+            </Link>
           </p>
         </div>
       </div>

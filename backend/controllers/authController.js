@@ -5,7 +5,7 @@ const generateToken = require("../utils/generateToken");
 
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, username, password, role } = req.body;
 
     // 1️⃣ Required field validation
     if (!name || !email || !password || !role) {
@@ -37,6 +37,8 @@ exports.registerUser = async (req, res) => {
 
     // 4️⃣ Role validation (case-insensitive)
     if (!["volunteer", "ngo"].includes(normalizedRole)) {
+    // 4️⃣ Role validation
+    if (!["volunteer", "ngo"].includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Invalid role. Must be volunteer or NGO",
@@ -60,7 +62,8 @@ exports.registerUser = async (req, res) => {
     // 7️⃣ Create user
     const user = await User.create({
       name,
-      email: normalizedEmailReg,
+      email,
+      username,
       password: hashedPassword,
       role: normalizedRole,
     });
@@ -77,6 +80,7 @@ exports.registerUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        username: user.username,
         role: user.role,
         skills: user.skills,
         location: user.location,

@@ -12,6 +12,7 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+export default API;
 
 // Register API
 export const registerUser = (data) => {
