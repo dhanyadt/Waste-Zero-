@@ -7,4 +7,12 @@ export default defineConfig({
   build: {
     cssMinify: false,
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

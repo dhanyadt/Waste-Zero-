@@ -2,14 +2,20 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-const connectDB = require("./config/db");  // 👈 must be here
+const connectDB = require("./config/db");
 
 const app = express();
 
-app.use(cors());
+// CORS configuration to allow frontend requests
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
+
 app.use(express.json());
 
-connectDB();  // 👈 must be called
+// Connect to database (optional - works in demo mode without it)
+connectDB();
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
@@ -18,7 +24,7 @@ app.use("/api/users", require("./routes/userRoutes"));
 
 
 app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
+  res.send("Backend is running 🚀 (Demo Mode)");
 });
 
 const PORT = process.env.PORT || 5000;

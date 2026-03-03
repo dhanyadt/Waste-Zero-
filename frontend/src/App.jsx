@@ -37,7 +37,6 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
           {/* Public Routes */}
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -64,7 +63,6 @@ function App() {
 
           {/* Catch All */}
           <Route path="*" element={<Navigate to="/" />} />
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>
