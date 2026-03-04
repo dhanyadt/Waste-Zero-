@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -16,33 +17,25 @@ app.use(cors({
 
 app.use(express.json());
 
-const startServer = async () => {
-  try {
-    await connectDB();
-// Connect to database (optional - works in demo mode without it)
+// Connect to database
 connectDB();
 
-    app.use("/api/auth", require("./routes/authRoutes"));
-    app.use("/api/users", require("./routes/userRoutes"));
-    app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-
-    app.get("/", (req, res) => {
-      res.send("Backend is running");
-    });
-
-    const PORT = process.env.PORT || 5000;
+// ── Routes ────────────────────────────────────────────────────
+app.use("/api/auth",          require("./routes/authRoutes"));
+app.use("/api/users",         require("./routes/userRoutes"));
+app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 
     app.listen(PORT, () => {
       console.log("Server running on port " + PORT);
     });
 app.get("/", (req, res) => {
-  res.send("Backend is running 🚀 (Demo Mode)");
+  res.send("Backend is running 🚀");
 });
 
-  } catch (error) {
-    console.error("Failed to start server due to DB connection error:", error.message);
-    process.exit(1);
-  }
-};
+// ── Centralized error handler (must be LAST) ──────────────────
+app.use(errorHandler);
 
-startServer();
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
