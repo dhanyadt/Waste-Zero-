@@ -9,6 +9,8 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   // user state
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const updateUser = (updatedUserData) => {
     setUser(updatedUserData);
     localStorage.setItem("user", JSON.stringify(updatedUserData));
@@ -22,6 +24,16 @@ export const AuthProvider = ({ children }) => {
     if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
     }
+    setLoading(false);
+
+  }, []);
+
+  // Login function
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
   }, []);
 
   // Login function - calls API
@@ -165,6 +177,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        loading,
         login,
         logout,
         updateUser,

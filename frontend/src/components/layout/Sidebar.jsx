@@ -189,7 +189,7 @@ const Sidebar = () => {
           </div>
           <div>
             <p style={S.userName}>{user?.name || "User"}</p>
-            <p style={S.userRole}>{user?.role || "role"}</p>
+            <p style={S.userRole}>{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "role"}</p>
             <span style={S.statusDot(user?.isAvailable)}>
               <span style={S.dot(user?.isAvailable)} />
               {user?.isAvailable ? "Available" : "Unavailable"}

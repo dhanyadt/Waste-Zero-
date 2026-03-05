@@ -15,6 +15,9 @@ exports.registerUser = async (req, res) => {
       });
     }
 
+    // Normalize role to lowercase
+    const normalizedRole = role.toLowerCase();
+
     // 2️⃣ Email validation
     if (!validator.isEmail(email)) {
       return res.status(400).json({
@@ -32,6 +35,8 @@ exports.registerUser = async (req, res) => {
       });
     }
 
+    // 4️⃣ Role validation (case-insensitive)
+    if (!["volunteer", "ngo"].includes(normalizedRole)) {
     // 4️⃣ Role validation
     if (!["volunteer", "ngo"].includes(role)) {
       return res.status(400).json({
@@ -40,8 +45,9 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // 5️⃣ Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // 5️⃣ Check if user already exists (normalize email to lowercase)
+    const normalizedEmailReg = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmailReg });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -59,7 +65,7 @@ exports.registerUser = async (req, res) => {
       email,
       username,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
     });
 
     // 8️⃣ Generate JWT
@@ -102,8 +108,11 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // 2️⃣ Check if user exists
-    const user = await User.findOne({ email });
+    // 2️⃣ Normalize email to lowercase for consistent lookup
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // 3️⃣ Check if user exists
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).json({
         success: false,
