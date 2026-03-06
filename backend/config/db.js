@@ -1,15 +1,23 @@
 const mongoose = require("mongoose");
+const Opportunity = require("../models/Opportunity");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 30000, // increase timeout
-      socketTimeoutMS: 45000,
-      family: 4,
-      maxPoolSize: 5,
-    });
+    if (!process.env.MONGO_URI) {
+      console.warn("MongoDB URI not configured. Running in demo mode.");
+      return;
+    }
+    
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected Successfully: ${conn.connection.host}`);
+    console.log("Collections ready: Users, Opportunities");
 
-    console.log("MongoDB Connected ✅");
+    // Index verification (optional — development only)
+    if (process.env.NODE_ENV === 'development') {
+      const indexes = await Opportunity.collection.getIndexes();
+      console.log("🔍 Opportunity Indexes:", Object.keys(indexes));
+    }
+
   } catch (error) {
     console.error("MongoDB Connection Failed:", error.message);
     console.log("Running in demo mode without database.");

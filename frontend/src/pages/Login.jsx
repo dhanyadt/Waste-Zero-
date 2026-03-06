@@ -1,180 +1,208 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import "./Login.css";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("volunteer");
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+
+
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
-
-    console.log("Logging in with:", { email, password, role });
-
-    const result = await login(email, password, role);
-
-    console.log("Login result:", result);
-
-    setIsLoading(false);
-
-    if (result.success) {
-      console.log("Navigating to dashboard...");
+    if (!formData.email || !formData.password) { 
+      setError("Please fill all fields"); 
+      setIsLoading(false); 
+      return; 
+    if (!formData.email || !formData.password) {
+      setError("Please fill all fields");
+      setIsLoading(false);
+      return;
+    }
+    setError("");
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email.toLowerCase().trim(), password: formData.password }),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      console.log("Login response:", data);
+      
+      if (!response.ok) { 
+        setError(data.message || "Login failed"); 
+        setIsLoading(false);
+        return; 
+      }
+      
+      // Store token and login user
+      localStorage.setItem("token", data.token);
+      login(data.user);
+      navigate("/dashboard-select");
+    } catch (err) {
+      console.error("Login error:", err);
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
+      localStorage.setItem("token", data.token);
+      updateUser(data.user);
       navigate("/dashboard");
-    } else {
-      setError(result.message || "Login failed. Please check your credentials.");
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+   const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  const handleSocialLogin = (provider) => {
+    login({ name: `${provider} User`, role: "volunteer", email: `user@${provider.toLowerCase()}.com` });
+    navigate("/dashboard-select");
+    const userData = {
+      name: `${provider} User`,
+      role: "volunteer",
+      email: `user@${provider.toLowerCase()}.com`,
+    };
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", "demo-token");
+    updateUser(userData);
+    navigate("/dashboard");
+  };
+
   return (
-    <div className="h-screen flex">
-      {/* Left Side - Green Background with Logo */}
-      <div className="w-1/2 bg-gradient-to-b from-green-500 to-green-600 flex flex-col items-center justify-center text-white">
-        <div className="flex flex-col items-center space-y-6">
-          {/* Recycling Logo */}
-          <div className="text-6xl">
-            <svg className="w-24 h-24" viewBox="0 0 100 100" fill="currentColor">
-              <path d="M50 10 L85 45 L70 45 L85 60 L50 90 L50 70 L30 70 L50 45 L35 45 Z" opacity="0.8"/>
-              <path d="M30 50 L50 30 L50 50 L70 50 L50 75 Z" opacity="0.6"/>
-            </svg>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="lc-left">
+          <div className="lc-left-glow" />
+          <div className="lc-brand">
+            <div className="lc-logo-wrap">
+              <img src="/images/Logo.png" alt="WasteZero Logo" />
+            </div>
+            <h3>WasteZero Initiative</h3>
+            <p>Together we care for the future of the next generations</p>
           </div>
-          <h1 className="text-4xl font-bold">WasteZero Initiative</h1>
-          <p className="text-center text-lg max-w-xs">
-            Together we care for the future of the next generations
-          </p>
+          <div className="lc-day">
+            <span>World Recycling Day</span>
+            <strong>17TH MAY</strong>
+          </div>
         </div>
-      </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-1/2 bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-12">
-        <div className="w-full max-w-md">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-100 mb-8">
-            Enter your details to log in.
-          </h2>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Role Selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setRole("volunteer")}
-                className={`py-3 rounded-lg font-semibold transition-colors duration-200 ${
-                  role === "volunteer"
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                }`}
-              >
-                🤝 Volunteer
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("ngo")}
-                className={`py-3 rounded-lg font-semibold transition-colors duration-200 ${
-                  role === "ngo"
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                }`}
-              >
-                🏢 NGO
-              </button>
-            </div>
-
-            {/* Email Input */}
-            <div>
+        <div className="lc-right">
+          <h2>Login</h2>
+          <p>Enter your details to log in.</p>
+          {error && <div className="lc-error">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="lc-field">
               <input
                 type="email"
-                placeholder="Enter your email (optional for demo)"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:bg-gray-800 dark:text-white"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                className="lc-input"
+                required
               />
             </div>
-
-            {/* Password Input */}
-            <div className="relative">
+            <div className="lc-field">
               <input
-                type="password"
-                placeholder="Enter your password (optional for demo)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 dark:bg-gray-800 dark:text-white"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                className="lc-input"
+                style={{ paddingRight: "44px" }}
+                required
               />
-              <span className="absolute right-3 top-3 text-2xl">🔒</span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="lc-eye"
+              >
+                {showPassword ? "👁️" : "🔒"}
+              </button>
             </div>
-
-            {/* Continue Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors duration-200 text-lg disabled:bg-green-300"
-            >
-              {isLoading ? "Logging in..." : "Continue"}
+            <button type="submit" className="lc-submit" disabled={isLoading}>
+              {isLoading ? "Logging in…" : "Continue"}
             </button>
           </form>
-
-          {/* Demo Mode Notice */}
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
-              💡 Demo Mode: Click Continue without entering credentials to explore
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-            <span className="px-3 text-gray-500 dark:text-gray-400 font-medium">OR</span>
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-          </div>
-
-          {/* Social Login Buttons */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 dark:border-gray-600 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-            >
-              <span className="text-xl">🔍</span>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">Continue with Google</span>
-            </button>
-
-            <button
-              type="button"
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 dark:border-gray-600 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-            >
-              <span className="text-xl">📘</span>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">Continue with Facebook</span>
-            </button>
-
-            <button
-              type="button"
-              className="w-full flex items-center justify-center space-x-2 border border-gray-300 dark:border-gray-600 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-            >
-              <span className="text-xl">🍎</span>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">Continue with Apple</span>
-            </button>
-          </div>
-
-          {/* Register Link */}
-          <div className="text-center mt-8">
-            <p className="text-gray-600 dark:text-gray-400">
-              Don't have an account?{" "}
-              <a href="/register" className="text-green-500 font-semibold hover:underline">
-                Register
-              </a>
-            </p>
-          </div>
+          <div className="lc-divider">OR</div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              marginBottom: "10px",
+              border: "1.5px solid #e0e0e0",
+              borderRadius: "11px",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#3c3c3c",
+              background: "#ffffff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              transition: "box-shadow 0.2s, background 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.boxShadow = "0 3px 10px rgba(0,0,0,0.15)";
+              e.target.style.background = "#f7f7f7";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.boxShadow = "0 1px 4px rgba(0,0,0,0.1)";
+              e.target.style.background = "#ffffff";
+            }}
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              style={{ width: "20px", height: "20px" }}
+            />
+            Continue with Google
+          </button>
+          <p className="lc-register-link">
+            Don't have an account?{" "}
+            <Link to="/register" className="lc-link">
+              Register
+            </Link>
+          </p>
+          <p className="lc-terms">
+            By continuing, you agree to the updated{" "}
+            <a href="/terms" className="lc-link">
+              Terms of Sale
+            </a>
+            ,{" "}
+            <a href="/terms" className="lc-link">
+              Terms of Service
+            </a>
+            , and{" "}
+            <a href="/privacy" className="lc-link">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

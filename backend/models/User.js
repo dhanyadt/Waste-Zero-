@@ -15,15 +15,22 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    username: {
+      type: String,
+      required: false,
+    },
 
     password: {
       type: String,
-      required: true,
+      required: false,
     },
 
     role: {
       type: String,
-      enum: ["volunteer", "NGO"],
+      enum: ["volunteer", "ngo", "NGO", "admin"],
+      default: null,
+      enum: ["volunteer", "ngo"],
+      enum: ["volunteer", "ngo", "admin"],
       required: true,
     },
 
@@ -41,6 +48,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    profilePic: { type: String },
   },
   { timestamps: true },
 );

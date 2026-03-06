@@ -1,38 +1,64 @@
 const express = require("express");
 const router = express.Router();
 
+const {
+  createOpportunity,
+  getAllOpportunities,
+  getOpportunityById,
+  updateOpportunity,
+  deleteOpportunity,
+  getMyOpportunities,
+  getAllOpportunities,
+  getAllOpportunitiesForNgo,
+  updateOpportunity,
+  deleteOpportunity,
+  applyToOpportunity,
+  getMyApplications,
+} = require("../controllers/opportunityController");
+
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
-const opportunityController = require("../controllers/opportunityController");
+// ── GET /opportunities  — public, supports ?location=&skills=&status=
+router.get("/", getAllOpportunities);
 
-// DEBUG: Check if everything is loading properly
-console.log("createOpportunity:", opportunityController.createOpportunity);
-console.log("getAllOpportunities:", opportunityController.getAllOpportunities);
-console.log("getOpportunityById:", opportunityController.getOpportunityById);
-console.log("updateOpportunity:", opportunityController.updateOpportunity);
-console.log("deleteOpportunity:", opportunityController.deleteOpportunity);
-console.log("authMiddleware:", authMiddleware);
-console.log("roleMiddleware:", roleMiddleware);
+// ── GET /opportunities/:id  — public
+router.get("/:id", getOpportunityById);
 
-// CREATE (NGO only)
+// ── POST /opportunities  — NGO only
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("NGO"),
-  opportunityController.createOpportunity
+  roleMiddleware("ngo"),
+  createOpportunity
 );
 
-// GET ALL
-router.get("/", opportunityController.getAllOpportunities);
+// ── PUT /opportunities/:id  — NGO only + ownership checked in controller
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("ngo"),
+  updateOpportunity
+);
 
-// GET SINGLE
-router.get("/:id", opportunityController.getOpportunityById);
+// ── DELETE /opportunities/:id  — NGO only + ownership checked in controller
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("ngo"),
+  deleteOpportunity
+);
 
-// UPDATE (Owner only)
-router.put("/:id", authMiddleware, opportunityController.updateOpportunity);
+module.exports = router;
 
-// DELETE (Owner only)
-router.delete("/:id", authMiddleware, opportunityController.deleteOpportunity);
+router.post("/", authMiddleware, createOpportunity);
+router.get("/", authMiddleware, getMyOpportunities);
+router.get("/all", getAllOpportunities);
+// NGO can get all opportunities (both NGO and volunteer created)
+router.get("/ngo/all", authMiddleware, roleMiddleware("ngo"), getAllOpportunitiesForNgo);
+router.get("/my-applications", authMiddleware, getMyApplications);
+router.put("/:id", authMiddleware, updateOpportunity);
+router.delete("/:id", authMiddleware, deleteOpportunity);
+router.post("/:id/apply", authMiddleware, applyToOpportunity);
 
 module.exports = router;

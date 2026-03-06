@@ -1,31 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const passport = require("passport");
 
 const connectDB = require("./config/db");
+const errorHandler = require("./middleware/errorHandler");
+
+require("./config/passport");
 
 const app = express();
 
-// CORS configuration to allow frontend requests
 app.use(cors({
   origin: "http://localhost:5173",
-  credentials: true,
+  credentials: true
 }));
 
 app.use(express.json());
 
-
-
-// Connect to database (optional - works in demo mode without it)
+// Connect to database
 connectDB();
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
-});
+app.use("/api/users", require("./routes/userRoutes"));
+
+// Error handler
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
