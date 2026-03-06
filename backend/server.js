@@ -7,57 +7,36 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
-app.use(cors({
-  origin: true,
-// CORS configuration to allow frontend requests
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
+// ── CORS Configuration (allow frontend requests) ─────────────
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
+// ── Middleware ───────────────────────────────────────────────
 app.use(express.json());
 
-// Connect to database
+// ── Connect to Database ──────────────────────────────────────
 connectDB();
 
-// ── Routes ────────────────────────────────────────────────────
-app.use("/api/auth",          require("./routes/authRoutes"));
-app.use("/api/users",         require("./routes/userRoutes"));
+// ── Routes ───────────────────────────────────────────────────
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-const startServer = async () => {
-  try {
-    await connectDB();
-// Connect to database (optional - works in demo mode without it)
-connectDB();
 
-    app.use("/api/auth", require("./routes/authRoutes"));
-    app.use("/api/users", require("./routes/userRoutes"));
-    app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-
-    app.get("/", (req, res) => {
-      res.send("Backend is running");
-    });
-
-    const PORT = process.env.PORT || 5000;
-
-    app.listen(PORT, () => {
-      console.log("Server running on port " + PORT);
-    });
+// ── Root Route ───────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// ── Centralized error handler (must be LAST) ──────────────────
+// ── Error Handler (must be LAST middleware) ──────────────────
 app.use(errorHandler);
 
+// ── Start Server ─────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-  } catch (error) {
-    console.error("Failed to start server due to DB connection error:", error.message);
-    process.exit(1);
-  }
-};
-
-startServer();

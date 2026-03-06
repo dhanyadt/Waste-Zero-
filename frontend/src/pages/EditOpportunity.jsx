@@ -3,215 +3,103 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getMyOpportunities, updateOpportunity } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/layout/Sidebar";
+import { CheckCircle2, Pencil } from "lucide-react";
 
 const T = {
-  gDeep: "#1b5e20", gDark: "#2e7d32", gMid: "#43a047", gLight: "#81c784",
-  gPale: "#c8e6c9", gSage: "#a5c8a0",
-  bDark: "#3e2723", bMid: "#5d4037", bLight: "#8d6e63",
-  bPale: "#efebe9", bSand: "#d7ccc8",
-  cream: "#fdf8f0", pageBg: "#f4ede0",
-  textDark: "#1c1008", textMid: "#4b3f36", textSoft: "#7b6b63",
+  gDeep:"#1b5e20", gDark:"#2e7d32", gMid:"#43a047",
+  gPale:"#e8f5e9", gSage:"#a5c8a0",
+  bDark:"#3e2723", bMid:"#5d4037", bLight:"#8d6e63",
+  bPale:"#efebe9", bSand:"#d7ccc8",
+  textDark:"#1c1008", textMid:"#4b3f36", textSoft:"#7b6b63",
 };
-const font = "'DM Sans', sans-serif";
+const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
 const SKILLS_OPTIONS = [
-  "Community Outreach", "Event Planning", "Social Media", "Driving",
-  "Physical Labor", "First Aid", "Teaching", "Leadership",
-  "Fundraising", "Photography", "Logistics", "Marketing"
+  "Teaching", "Event Planning", "Fundraising", "Social Media",
+  "Content Writing", "Graphic Design", "Photography", "Video Editing",
+  "Web Development", "Data Analysis", "Community Outreach",
+  "Project Management", "Public Speaking", "Research", "Translation",
 ];
 
-const S = {
-  layout: {
-    display: "flex", minHeight: "100vh",
-    fontFamily: font,
-    background: T.pageBg,
-    backgroundImage: [
-      "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.18) 0%, transparent 40%)",
-      "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.15) 0%, transparent 40%)",
-    ].join(", "),
-  },
-  main: { flex: 1, padding: "40px 36px", overflowY: "auto" },
-  header: { marginBottom: 32 },
-  headerTop: { display: "flex", alignItems: "center", gap: 14, marginBottom: 6 },
-  headerIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    background: `linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 22, color: "#fff",
-  },
-  h1: { fontFamily: serif, fontSize: 26, fontWeight: 800, color: T.bDark, letterSpacing: "-.3px", margin: 0 },
-  subtitle: { fontSize: 14, color: T.textSoft, marginLeft: 58 },
-  
-  card: {
-    borderRadius: 18,
-    background: "linear-gradient(145deg, #fdf8f0, #f8f0e4)",
-    border: `1px solid ${T.bSand}`,
-    boxShadow: "0 2px 8px rgba(62,39,35,.09)",
-    padding: "32px",
-    maxWidth: 700,
-  },
-  cardTitle: {
-    fontFamily: serif, fontSize: 18, fontWeight: 700, color: T.bDark,
-    marginBottom: 24, paddingBottom: 14, borderBottom: `1px solid ${T.bPale}`,
-  },
-  field: { marginBottom: 20 },
-  label: { display: "block", fontSize: 13, fontWeight: 700, color: T.bMid, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".5px" },
-  input: {
-    width: "100%", padding: "12px 16px",
-    border: `1.5px solid ${T.bSand}`, borderRadius: 10,
-    fontSize: 14, fontFamily: font,
-    color: T.textDark, background: "#fff",
-    outline: "none", boxSizing: "border-box",
-    transition: "border-color .2s, box-shadow .2s",
-  },
-  textarea: {
-    width: "100%", padding: "12px 16px",
-    border: `1.5px solid ${T.bSand}`, borderRadius: 10,
-    fontSize: 14, fontFamily: font,
-    color: T.textDark, background: "#fff",
-    outline: "none", boxSizing: "border-box",
-    minHeight: 120, resize: "vertical",
-  },
-  select: {
-    width: "100%", padding: "12px 16px",
-    border: `1.5px solid ${T.bSand}`, borderRadius: 10,
-    fontSize: 14, fontFamily: font,
-    color: T.textDark, background: "#fff",
-    cursor: "pointer", appearance: "none",
-    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b5c52' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", backgroundSize: 16,
-  },
-  
-  skillsGrid: {
-    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-    gap: 10,
-  },
-  skillChip: (selected) => ({
-    padding: "8px 14px", borderRadius: 20,
-    border: selected ? `2px solid ${T.gMid}` : `1.5px solid ${T.bSand}`,
-    background: selected ? T.gPale : "#fff",
-    color: selected ? T.gDark : T.textMid,
-    fontSize: 13, fontWeight: 500, cursor: "pointer",
-    textAlign: "center", transition: "all .2s",
-  }),
-  
-  radioGroup: { display: "flex", gap: 16 },
-  radioLabel: (selected) => ({
-    display: "flex", alignItems: "center", gap: 8,
-    padding: "10px 18px", borderRadius: 10,
-    border: selected ? `2px solid ${T.gMid}` : `1.5px solid ${T.bSand}`,
-    background: selected ? T.gPale : "#fff",
-    color: selected ? T.gDark : T.textMid,
-    fontSize: 14, fontWeight: 500, cursor: "pointer",
-    transition: "all .2s",
-  }),
-  
-  btnRow: { display: "flex", gap: 12, marginTop: 28 },
-  btn: (primary) => ({
-    flex: 1, padding: "14px 24px",
-    background: primary ? `linear-gradient(135deg, ${T.gMid} 0%, ${T.gDark} 100%)` : T.bPale,
-    color: primary ? "#fff" : T.textMid,
-    border: "none", borderRadius: 10,
-    fontSize: 14, fontWeight: 600, fontFamily: font,
-    cursor: "pointer",
-    boxShadow: primary ? "0 4px 14px rgba(46,125,50,.3)" : "none",
-  }),
-  error: { background: "#fef2f2", border: "1px solid #fecaca", color: "#c62828", borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 20 },
-  success: { background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 20 },
-  loading: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", fontFamily: font },
-  notFound: { textAlign: "center", padding: 60, color: T.textSoft, fontSize: 16 },
-};
-
-const focusOn = (e) => { e.target.style.borderColor = T.gMid; e.target.style.boxShadow = "0 0 0 3px rgba(67,160,71,.15)"; };
-const focusOff = (e) => { e.target.style.borderColor = T.bSand; e.target.style.boxShadow = "none"; };
+const css = `
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scaleIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+  .eo-card { animation: fadeUp .3s ease both; }
+  .skill-chip { transition: all .15s !important; }
+  .skill-chip:hover { border-color: #4ade80 !important; }
+  .status-opt { transition: all .15s !important; }
+  .status-opt:hover { border-color: #86efac !important; }
+  .btn-submit { transition: all .2s !important; }
+  .btn-submit:hover { opacity:.88 !important; transform:translateY(-2px) !important; box-shadow:0 8px 22px rgba(46,125,50,.45) !important; }
+  .btn-submit:active { transform:translateY(0) !important; }
+  .eo-input:focus { border-color: #43a047 !important; box-shadow: 0 0 0 3px rgba(67,160,71,.15) !important; outline:none !important; }
+  .success-overlay { animation: scaleIn .2s ease both; }
+`;
 
 const EditOpportunity = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const [notFound, setNotFound] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    requiredSkills: [],
-    duration: "",
-    location: "",
-    status: "open",
+    title:"", description:"", requiredSkills:[],
+    duration:"", location:"", status:"open",
   });
 
   useEffect(() => {
     const fetchOpportunity = async () => {
-      if (!id) {
-        setNotFound(true);
-        setIsFetching(false);
-        return;
-      }
-      
+      if (!id) { setNotFound(true); setIsFetching(false); return; }
       try {
         const response = await getMyOpportunities();
-        const opportunities = response.data.opportunities || [];
-        const opportunity = opportunities.find(op => op._id === id);
-        
-        if (!opportunity) {
-          setNotFound(true);
-        } else {
+        const opp = (response.data.opportunities || []).find(o => o._id === id);
+        if (!opp) { setNotFound(true); }
+        else {
           setFormData({
-            title: opportunity.title || "",
-            description: opportunity.description || "",
-            requiredSkills: opportunity.requiredSkills || [],
-            duration: opportunity.duration || "",
-            location: opportunity.location || "",
-            status: opportunity.status || "open",
+            title: opp.title || "",
+            description: opp.description || "",
+            requiredSkills: opp.requiredSkills || [],
+            duration: opp.duration || "",
+            location: opp.location || "",
+            status: opp.status || "open",
           });
         }
       } catch (err) {
-        console.error("Failed to fetch opportunity:", err);
         setError("Failed to load opportunity");
       } finally {
         setIsFetching(false);
       }
     };
-
-    if (!authLoading && user) {
-      fetchOpportunity();
-    }
+    if (!authLoading && user) fetchOpportunity();
   }, [id, authLoading, user]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const toggleSkill = (skill) => {
-    setFormData(prev => ({
-      ...prev,
-      requiredSkills: prev.requiredSkills.includes(skill)
-        ? prev.requiredSkills.filter(s => s !== skill)
-        : [...prev.requiredSkills, skill]
-    }));
-  };
+  const toggleSkill = (skill) => setFormData(prev => ({
+    ...prev,
+    requiredSkills: prev.requiredSkills.includes(skill)
+      ? prev.requiredSkills.filter(s => s !== skill)
+      : [...prev.requiredSkills, skill],
+  }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
-    
     if (!formData.title || !formData.description || !formData.duration || !formData.location) {
       setError("Please fill in all required fields");
       return;
     }
-
     setIsLoading(true);
     try {
       await updateOpportunity(id, formData);
-      setSuccess("Opportunity updated successfully!");
-      setTimeout(() => navigate("/dashboard"), 1500);
+      setShowSuccess(true);
+      setTimeout(() => navigate("/ngo-dashboard"), 1800);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update opportunity");
     } finally {
@@ -219,122 +107,203 @@ const EditOpportunity = () => {
     }
   };
 
-  if (authLoading || isFetching) {
-    return (
-      <div style={S.layout}>
-        <Sidebar />
-        <main style={S.main}>
-          <div style={S.loading}>
-            <p style={{ color: T.textSoft }}>Loading opportunity...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const darkBg = {
+    backgroundImage:[
+      "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
+      "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
+      "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
+    ].join(", "),
+  };
 
-  if (notFound) {
-    return (
-      <div style={S.layout}>
-        <Sidebar />
-        <main style={S.main}>
-          <div style={S.header}>
-            <div style={S.headerTop}>
-              <div style={S.headerIcon}>📋</div>
-              <h1 style={S.h1}>Edit Opportunity</h1>
-            </div>
-          </div>
-          <div style={S.card}>
-            <p style={S.notFound}>Opportunity not found or you don't have permission to edit it.</p>
-            <button style={S.btn(true)} onClick={() => navigate("/dashboard")}>
-              Back to Dashboard
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  if (authLoading || isFetching) return (
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+      <Sidebar />
+      <main style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <p style={{ color:"rgba(255,255,255,.4)", fontSize:14 }}>Loading opportunity…</p>
+      </main>
+    </div>
+  );
+
+  if (notFound) return (
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+      <Sidebar />
+      <main style={{ flex:1, padding:"40px 36px" }}>
+        <div style={{ borderRadius:18, background:"#fff", border:`1px solid ${T.bSand}`, padding:"48px 32px", maxWidth:500, textAlign:"center" }}>
+          <p style={{ fontSize:15, color:T.textSoft, marginBottom:20 }}>Opportunity not found or you don't have permission to edit it.</p>
+          <button onClick={() => navigate("/ngo-dashboard")} style={{
+            padding:"12px 24px", borderRadius:10, border:"none",
+            background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+            color:"#fff", fontSize:14, fontWeight:600, fontFamily:font, cursor:"pointer",
+          }}>Back to Dashboard</button>
+        </div>
+      </main>
+    </div>
+  );
 
   return (
-    <div style={S.layout}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+      <style>{css}</style>
       <Sidebar />
-      <main style={S.main}>
-        <div style={S.header}>
-          <div style={S.headerTop}>
-            <div style={S.headerIcon}>✏️</div>
-            <h1 style={S.h1}>Edit Opportunity</h1>
+      <main style={{ flex:1, padding:"40px 36px", overflowY:"auto" }}>
+
+        {/* Success overlay */}
+        {showSuccess && (
+          <div style={{
+            position:"fixed", inset:0, zIndex:1000,
+            background:"rgba(22,37,22,.85)", backdropFilter:"blur(8px)",
+            display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", gap:16,
+          }}>
+            <div className="success-overlay" style={{
+              width:72, height:72, borderRadius:20,
+              background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              boxShadow:"0 8px 28px rgba(46,125,50,.5)",
+            }}>
+              <CheckCircle2 size={36} color="#fff" />
+            </div>
+            <p style={{ fontFamily:serif, fontSize:22, fontWeight:800, color:"#fff", margin:0 }}>Updated!</p>
+            <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", margin:0 }}>Opportunity updated successfully. Redirecting…</p>
           </div>
-          <p style={S.subtitle}>Update your recycling event or volunteer opportunity</p>
+        )}
+
+        {/* Header */}
+        <div style={{ marginBottom:28 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:4 }}>
+            <div style={{
+              width:44, height:44, borderRadius:12,
+              background:"rgba(255,255,255,.08)",
+              border:"1px solid rgba(255,255,255,.12)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>
+              <Pencil size={18} color="rgba(255,255,255,.7)" />
+            </div>
+            <div>
+              <h1 style={{ fontFamily:serif, fontSize:24, fontWeight:800, color:"#fff", margin:0, letterSpacing:"-.3px" }}>
+                Edit Opportunity
+              </h1>
+              <p style={{ fontSize:13, color:"rgba(255,255,255,.4)", margin:0 }}>Update your volunteer opportunity details</p>
+            </div>
+          </div>
         </div>
 
-        <div style={S.card}>
-          <h2 style={S.cardTitle}>Opportunity Details</h2>
-          
-          {error && <div style={S.error}>{error}</div>}
-          {success && <div style={S.success}>{success}</div>}
+        {/* Form card */}
+        <div className="eo-card" style={{
+          borderRadius:18, background:"#fff",
+          border:`1px solid ${T.bSand}`,
+          boxShadow:"0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          padding:"32px", 
+          position:"relative", overflow:"hidden",
+        }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
+          <h2 style={{ fontFamily:serif, fontSize:17, fontWeight:700, color:T.bDark, margin:"0 0 24px", paddingBottom:14, borderBottom:`1px solid ${T.bPale}` }}>
+            Opportunity Details
+          </h2>
+
+          {error && (
+            <div style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#c62828", borderRadius:10, padding:"10px 14px", fontSize:13.5, marginBottom:20 }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
-            <div style={S.field}>
-              <label style={S.label}>Title *</label>
-              <input type="text" name="title" placeholder="e.g., Community Recycling Drive" 
-                value={formData.title} onChange={handleChange} onFocus={focusOn} onBlur={focusOff}
-                style={S.input} required />
+            <div style={{ marginBottom:20 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:8 }}>
+                Title <span style={{color:"#ef4444"}}>*</span>
+              </label>
+              <input className="eo-input" type="text" name="title" placeholder="Opportunity Title"
+                value={formData.title} onChange={handleChange} required
+                style={{ width:"100%", padding:"12px 16px", border:`1.5px solid ${T.bSand}`, borderRadius:10, fontSize:14, fontFamily:font, color:T.textDark, background:"#fff", boxSizing:"border-box", transition:"border-color .2s, box-shadow .2s" }} />
             </div>
 
-            <div style={S.field}>
-              <label style={S.label}>Description *</label>
-              <textarea name="description" placeholder="Describe the opportunity, activities, and goals..."
-                value={formData.description} onChange={handleChange} onFocus={focusOn} onBlur={focusOff}
-                style={S.textarea} required />
+            <div style={{ marginBottom:20 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:8 }}>
+                Description <span style={{color:"#ef4444"}}>*</span>
+              </label>
+              <textarea className="eo-input" name="description" placeholder="Describe the opportunity..."
+                value={formData.description} onChange={handleChange} required
+                style={{ width:"100%", padding:"12px 16px", border:`1.5px solid ${T.bSand}`, borderRadius:10, fontSize:14, fontFamily:font, color:T.textDark, background:"#fff", boxSizing:"border-box", minHeight:110, resize:"vertical", transition:"border-color .2s, box-shadow .2s" }} />
             </div>
 
-            <div style={S.field}>
-              <label style={S.label}>Required Skills</label>
-              <div style={S.skillsGrid}>
-                {SKILLS_OPTIONS.map(skill => (
-                  <div key={skill} style={S.skillChip(formData.requiredSkills.includes(skill))}
-                    onClick={() => toggleSkill(skill)}>
-                    {skill}
-                  </div>
-                ))}
+            <div style={{ marginBottom:20 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:10 }}>
+                Required Skills
+              </label>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                {SKILLS_OPTIONS.map(skill => {
+                  const sel = formData.requiredSkills.includes(skill);
+                  return (
+                    <div key={skill} className="skill-chip" onClick={() => toggleSkill(skill)} style={{
+                      padding:"7px 14px", borderRadius:20, cursor:"pointer",
+                      border: sel ? `2px solid ${T.gMid}` : `1.5px solid ${T.bSand}`,
+                      background: sel ? T.gPale : "#fff",
+                      color: sel ? T.gDark : T.textMid,
+                      fontSize:13, fontWeight: sel ? 600 : 400,
+                    }}>{skill}</div>
+                  );
+                })}
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div style={S.field}>
-                <label style={S.label}>Duration *</label>
-                <input type="text" name="duration" placeholder="e.g., 2 hours, 1 week"
-                  value={formData.duration} onChange={handleChange} onFocus={focusOn} onBlur={focusOff}
-                  style={S.input} required />
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
+              <div>
+                <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:8 }}>
+                  Duration <span style={{color:"#ef4444"}}>*</span>
+                </label>
+                <input className="eo-input" type="text" name="duration" placeholder="e.g., 3 months"
+                  value={formData.duration} onChange={handleChange} required
+                  style={{ width:"100%", padding:"12px 16px", border:`1.5px solid ${T.bSand}`, borderRadius:10, fontSize:14, fontFamily:font, color:T.textDark, background:"#fff", boxSizing:"border-box", transition:"border-color .2s, box-shadow .2s" }} />
               </div>
-              <div style={S.field}>
-                <label style={S.label}>Location *</label>
-                <input type="text" name="location" placeholder="e.g., Central Park, City Name"
-                  value={formData.location} onChange={handleChange} onFocus={focusOn} onBlur={focusOff}
-                  style={S.input} required />
-              </div>
-            </div>
-
-            <div style={S.field}>
-              <label style={S.label}>Status</label>
-              <div style={S.radioGroup}>
-                <div style={S.radioLabel(formData.status === "open")}
-                  onClick={() => setFormData({ ...formData, status: "open" })}>
-                  <span>🟢</span> Open
-                </div>
-                <div style={S.radioLabel(formData.status === "closed")}
-                  onClick={() => setFormData({ ...formData, status: "closed" })}>
-                  <span>🔴</span> Closed
-                </div>
+              <div>
+                <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:8 }}>
+                  Location <span style={{color:"#ef4444"}}>*</span>
+                </label>
+                <input className="eo-input" type="text" name="location" placeholder="Location"
+                  value={formData.location} onChange={handleChange} required
+                  style={{ width:"100%", padding:"12px 16px", border:`1.5px solid ${T.bSand}`, borderRadius:10, fontSize:14, fontFamily:font, color:T.textDark, background:"#fff", boxSizing:"border-box", transition:"border-color .2s, box-shadow .2s" }} />
               </div>
             </div>
 
-            <div style={S.btnRow}>
-              <button type="button" style={S.btn(false)} onClick={() => navigate("/dashboard")}>
-                Cancel
-              </button>
-              <button type="submit" style={S.btn(true)} disabled={isLoading}>
-                {isLoading ? "Updating..." : "Update Opportunity"}
-              </button>
+            <div style={{ marginBottom:28 }}>
+              <label style={{ display:"block", fontSize:12, fontWeight:700, color:T.bMid, textTransform:"uppercase", letterSpacing:".8px", marginBottom:10 }}>
+                Status
+              </label>
+              <div style={{ display:"flex", gap:10 }}>
+                {[
+                  { val:"open",        dot:"#22c55e", label:"Open"        },
+                  { val:"in-progress", dot:"#eab308", label:"In Progress" },
+                  { val:"closed",      dot:"#ef4444", label:"Closed"      },
+                ].map(({ val, dot, label }) => {
+                  const sel = formData.status === val;
+                  return (
+                    <div key={val} className="status-opt" onClick={() => setFormData({...formData, status:val})} style={{
+                      display:"inline-flex", alignItems:"center", gap:8,
+                      padding:"10px 16px", borderRadius:10, cursor:"pointer",
+                      border: sel ? `2px solid ${T.gMid}` : `1.5px solid ${T.bSand}`,
+                      background: sel ? T.gPale : "#fff",
+                      color: sel ? T.gDark : T.textMid,
+                      fontSize:13.5, fontWeight: sel ? 600 : 400,
+                    }}>
+                      <span style={{ width:8, height:8, borderRadius:"50%", background:dot }} />
+                      {label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display:"flex", gap:12 }}>
+              <button type="button" onClick={() => navigate("/ngo-dashboard")} style={{
+                flex:1, padding:"13px 24px", borderRadius:10,
+                border:`1.5px solid ${T.bSand}`, background:"transparent",
+                color:T.textMid, fontSize:14, fontWeight:600, fontFamily:font, cursor:"pointer",
+              }}>Cancel</button>
+              <button type="submit" className="btn-submit" disabled={isLoading} style={{
+                flex:2, padding:"13px 24px", borderRadius:10,
+                border:"none", background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+                color:"#fff", fontSize:14, fontWeight:600, fontFamily:font, cursor:"pointer",
+                boxShadow:`0 4px 14px rgba(46,125,50,.3)`,
+              }}>{isLoading ? "Updating…" : "Update Opportunity"}</button>
             </div>
           </form>
         </div>

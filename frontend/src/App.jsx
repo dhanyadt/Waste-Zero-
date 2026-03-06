@@ -2,33 +2,29 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth, AuthProvider } from "./context/AuthContext";
 import Sidebar from "./components/layout/Sidebar";
 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import DashboardSelect from "./pages/DashboardSelect";
+import Login              from "./pages/Login";
+import Register           from "./pages/Register";
+import DashboardSelect    from "./pages/DashboardSelect";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
-import NgoDashboard from "./pages/NgoDashboard";
-import Profile from "./pages/Profile";
-import CreateOpportunity from "./pages/CreateOpportunity";
-import EditOpportunity from "./pages/EditOpportunity";
-import Opportunities from "./pages/Opportunities";
-import ProtectedRoute from "./components/ProtectedRoute";
+import NgoDashboard       from "./pages/NgoDashboard";
+import Profile            from "./pages/Profile";
+import CreateOpportunity  from "./pages/CreateOpportunity";
+import EditOpportunity    from "./pages/EditOpportunity";
+import Opportunities      from "./pages/Opportunities";
+import ProtectedRoute     from "./components/ProtectedRoute";
 
-/* --------------------------------------------------
-   Main App Component
--------------------------------------------------- */
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Login />} />
+
+          {/* ── Public ───────────────────────────────────────── */}
+          <Route path="/"         element={<Login />} />
+          <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Public Dashboard Selection (shows both options) */}
-          <Route path="/dashboard-select" element={<DashboardSelect />} />
-
-          {/* Protected Dashboard */}
+          {/* ── Auto-redirect based on role ───────────────────── */}
           <Route
             path="/dashboard"
             element={
@@ -38,36 +34,15 @@ function App() {
             }
           />
 
-          {/* Separate Dashboard Routes */}
-          <Route
-            path="/volunteer-dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["volunteer", "ngo"]}>
-                <VolunteerDashboard />
-              </ProtectedRoute>
-            }
-          />
-
+          {/* ── NGO routes ───────────────────────────────────── */}
           <Route
             path="/ngo-dashboard"
             element={
-              <ProtectedRoute allowedRoles={["ngo", "volunteer"]}>
+              <ProtectedRoute allowedRoles={["ngo"]}>
                 <NgoDashboard />
               </ProtectedRoute>
             }
           />
-
-          {/* Protected Profile */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Protected Create Opportunity (NGO Only) */}
           <Route
             path="/create-opportunity"
             element={
@@ -76,8 +51,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* Protected Edit Opportunity (NGO Only) */}
           <Route
             path="/edit-opportunity/:id"
             element={
@@ -87,65 +60,37 @@ function App() {
             }
           />
 
-          {/* Protected Opportunities Listing (All Users) */}
+          {/* ── Volunteer routes ─────────────────────────────── */}
+          <Route
+            path="/volunteer-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["volunteer"]}>
+                <VolunteerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ── Shared protected routes ──────────────────────── */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/opportunities"
             element={
               <ProtectedRoute>
-                <div style={{ display: "flex", minHeight: "100vh" }}>
-                  <Sidebar />
-                  <div style={{ flex: 1, overflow: "auto" }}>
-                    <Opportunities />
-                  </div>
-                </div>
+                <Opportunities />
               </ProtectedRoute>
             }
           />
 
-          {/* Other Protected Routes (redirect to dashboard) */}
-          <Route
-            path="/schedule"
-            element={
-              <ProtectedRoute>
-                <DashboardSelect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <DashboardSelect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/impact"
-            element={
-              <ProtectedRoute>
-                <DashboardSelect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <DashboardSelect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/help"
-            element={
-              <ProtectedRoute>
-                <DashboardSelect />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch All */}
+          {/* ── Catch all ────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" />} />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
