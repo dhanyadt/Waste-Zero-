@@ -2,9 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 const authMiddleware = async (req, res, next) => {
-  if (process.env.NODE_ENV === "development") {
-    console.log("Auth check: token received");
-  }
+  
   try {
     // Get Authorization header
     const authHeader = req.headers.authorization;
