@@ -20,7 +20,7 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error("MongoDB Connection Failed:", error.message);
-    console.warn("Running in demo mode without database.");
+    console.log("Running in demo mode without database.");
   }
 };
 

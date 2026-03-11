@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const Opportunity = require("../models/Opportunity");
 
-/* Helper: validate ObjectId */
+/* Helper to validate ObjectId */
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
 
 /* ─────────────────────────────
    CREATE OPPORTUNITY
-   POST /opportunities
 ───────────────────────────── */
 exports.createOpportunity = async (req, res) => {
   try {
@@ -20,8 +20,6 @@ exports.createOpportunity = async (req, res) => {
       });
     }
 
-    const createdByType = req.user.role === "ngo" ? "ngo" : "volunteer";
-
     const opportunity = await Opportunity.create({
       title,
       description,
@@ -29,6 +27,7 @@ exports.createOpportunity = async (req, res) => {
       duration,
       location,
       status: status || "open",
+      ngo: req.user.id
       createdBy: req.user._id,
       createdByType: createdByType,
       ngo: req.user._id,
@@ -39,18 +38,21 @@ exports.createOpportunity = async (req, res) => {
       message: "Opportunity created successfully",
       opportunity,
     });
+
   } catch (error) {
     console.error("Create Opportunity Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+
 /* ─────────────────────────────
    GET ALL OPPORTUNITIES
-   GET /opportunities
 ───────────────────────────── */
 exports.getAllOpportunities = async (req, res) => {
   try {
+    const opportunities = await Opportunity.find()
+      .populate("ngo", "name email role")
     const { location, skills, status } = req.query;
     const filter = {};
 
@@ -87,6 +89,7 @@ exports.getAllOpportunities = async (req, res) => {
       count: opportunities.length,
       opportunities,
     });
+
   } catch (error) {
     console.error("Get Opportunities Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -115,14 +118,18 @@ exports.getOpportunityById = async (req, res) => {
     const { id } = req.params;
 
     const opportunity = await Opportunity.findById(id)
-      .populate("createdBy", "name email role")
-      .populate("ngo", "name email");
+      .populate("ngo", "name email role");
 
     if (!opportunity) {
       return res
         .status(404)
         .json({ success: false, message: "Opportunity not found" });
     }
+
+    res.status(200).json({
+      success: true,
+      opportunity,
+    });
 
     res.status(200).json({ success: true, opportunity });
   } catch (error) {
@@ -131,12 +138,14 @@ exports.getOpportunityById = async (req, res) => {
   }
 };
 
+
+/* ─────────────────────────────
+   UPDATE OPPORTUNITY
+───────────────────────────── */
 // ── FIXED: NGO can only update opportunities THEY created ─────
 exports.updateOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, requiredSkills, duration, location, status } =
-      req.body;
 
     if (!isValidId(id)) {
       return res.status(400).json({
@@ -145,6 +154,7 @@ exports.updateOpportunity = async (req, res) => {
       });
     }
 
+    const opportunity = await Opportunity.findById(id);
     // Always check ownership — createdBy must match logged-in user
     const opportunity = await Opportunity.findOne({
       _id: id,
@@ -158,6 +168,22 @@ exports.updateOpportunity = async (req, res) => {
       });
     }
 
+    if (opportunity.ngo.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this opportunity",
+      });
+    }
+
+    const { title, description, requiredSkills, duration, location, status } =
+      req.body;
+
+    if (title) opportunity.title = title;
+    if (description) opportunity.description = description;
+    if (requiredSkills) opportunity.requiredSkills = requiredSkills;
+    if (duration) opportunity.duration = duration;
+    if (location) opportunity.location = location;
+    if (status) opportunity.status = status;
     opportunity.title = title || opportunity.title;
     opportunity.description = description || opportunity.description;
     opportunity.requiredSkills = requiredSkills || opportunity.requiredSkills;
@@ -172,11 +198,13 @@ exports.updateOpportunity = async (req, res) => {
       message: "Opportunity updated successfully",
       opportunity,
     });
+
   } catch (error) {
     console.error("Update Opportunity Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /* ─────────────────────────────
    DELETE OPPORTUNITY
@@ -193,18 +221,26 @@ exports.deleteOpportunity = async (req, res) => {
         .json({ success: false, message: "Opportunity not found" });
     }
 
-    const isCreator =
-      opportunity.createdBy.toString() === req.user._id.toString();
-
-    if (!isCreator) {
+    if (opportunity.ngo.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
-        message: "You can only delete opportunities you created",
+        message: "Not authorized to delete this opportunity",
       });
     }
 
     await Opportunity.findByIdAndDelete(id);
 
+    res.status(200).json({
+      success: true,
+      message: "Opportunity deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete Opportunity Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
     res
       .status(200)
       .json({ success: true, message: "Opportunity deleted successfully" });

@@ -1,12 +1,19 @@
 const express = require("express");
 const router = express.Router();
 
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
+
 const {
   createOpportunity,
   getAllOpportunities,
   getOpportunityById,
   updateOpportunity,
   deleteOpportunity,
+} = require("../controllers/opportunityController");
+
+
+// CREATE OPPORTUNITY (NGO only)
   getMyOpportunities,
   getMyApplications,
   applyToOpportunity
@@ -34,6 +41,20 @@ router.post(
 );
 
 
+// GET ALL OPPORTUNITIES
+router.get("/", getAllOpportunities);
+
+
+// GET SINGLE OPPORTUNITY
+router.get("/:id", getOpportunityById);
+
+
+// UPDATE OPPORTUNITY
+router.put("/:id", authMiddleware, updateOpportunity);
+
+
+// DELETE OPPORTUNITY
+router.delete("/:id", authMiddleware, deleteOpportunity);
 // Public routes
 router.get("/", getAllOpportunities);
 router.get("/:id", getOpportunityById);
@@ -45,6 +66,7 @@ router.put("/:id", authMiddleware, roleMiddleware("ngo"), updateOpportunity);
 
 // Delete opportunity
 router.delete("/:id", authMiddleware, roleMiddleware("ngo"), deleteOpportunity);
+
 
 
 module.exports = router;
