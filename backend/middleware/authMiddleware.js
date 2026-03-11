@@ -1,15 +1,13 @@
 const jwt = require("jsonwebtoken");
 
-const authMiddleware = (req, res, next) => {
 const authMiddleware = async (req, res, next) => {
-  
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized",
+        message: "Unauthorized: No token provided",
       });
     }
 
@@ -17,14 +15,16 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // attach user info to request
     req.user = decoded;
 
     next();
-
   } catch (error) {
+    console.error("Auth Middleware Error:", error);
+
     return res.status(401).json({
       success: false,
-      message: "Token invalid",
+      message: "Invalid or expired token",
     });
   }
 };

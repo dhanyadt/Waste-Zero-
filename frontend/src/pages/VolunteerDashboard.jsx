@@ -76,9 +76,7 @@ const VolunteerDashboard = () => {
   const fetchData = async () => {
     try {
       setLoadingData(true);
-      const oppResponse = await getMyOpportunities();
-      setOpportunities(oppResponse.data.opportunities || []);
-      const appResponse = await getMyApplications();
+     const appResponse = await getMyApplications();
       setApplications(appResponse.data.applications || []);
     } catch (err) {
       console.error("Failed to fetch data:", err);

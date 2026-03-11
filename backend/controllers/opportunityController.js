@@ -10,8 +10,7 @@ const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 ───────────────────────────── */
 exports.createOpportunity = async (req, res) => {
   try {
-    const { title, description, requiredSkills, duration, location, status } =
-      req.body;
+    const { title, description, requiredSkills, duration, location, status } = req.body;
 
     if (!title || !description || !duration || !location) {
       return res.status(400).json({
@@ -27,9 +26,8 @@ exports.createOpportunity = async (req, res) => {
       duration,
       location,
       status: status || "open",
-      ngo: req.user.id
       createdBy: req.user._id,
-      createdByType: createdByType,
+      createdByType: req.user.role,
       ngo: req.user._id,
     });
 
@@ -51,12 +49,9 @@ exports.createOpportunity = async (req, res) => {
 ───────────────────────────── */
 exports.getAllOpportunities = async (req, res) => {
   try {
-    const opportunities = await Opportunity.find()
-      .populate("ngo", "name email role")
     const { location, skills, status } = req.query;
     const filter = {};
 
-    // Validate status against enum values
     const validStatus = ["open", "closed"];
     if (status) {
       const normalizedStatus = status.toLowerCase();
@@ -96,9 +91,9 @@ exports.getAllOpportunities = async (req, res) => {
   }
 };
 
+
 /* ─────────────────────────────
    GET MY OPPORTUNITIES (NGO)
-   GET /opportunities/my-opportunities
 ───────────────────────────── */
 exports.getMyOpportunities = async (req, res) => {
   try {
@@ -107,12 +102,17 @@ exports.getMyOpportunities = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, opportunities });
+
   } catch (error) {
     console.error("Get My Opportunities Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+
+/* ─────────────────────────────
+   GET OPPORTUNITY BY ID
+───────────────────────────── */
 exports.getOpportunityById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,17 +121,14 @@ exports.getOpportunityById = async (req, res) => {
       .populate("ngo", "name email role");
 
     if (!opportunity) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Opportunity not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found",
+      });
     }
 
-    res.status(200).json({
-      success: true,
-      opportunity,
-    });
-
     res.status(200).json({ success: true, opportunity });
+
   } catch (error) {
     console.error("Get Opportunity Error:", error);
     res.status(400).json({ success: false, message: "Invalid opportunity ID" });
@@ -142,7 +139,6 @@ exports.getOpportunityById = async (req, res) => {
 /* ─────────────────────────────
    UPDATE OPPORTUNITY
 ───────────────────────────── */
-// ── FIXED: NGO can only update opportunities THEY created ─────
 exports.updateOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -154,8 +150,6 @@ exports.updateOpportunity = async (req, res) => {
       });
     }
 
-    const opportunity = await Opportunity.findById(id);
-    // Always check ownership — createdBy must match logged-in user
     const opportunity = await Opportunity.findOne({
       _id: id,
       createdBy: req.user._id,
@@ -168,22 +162,8 @@ exports.updateOpportunity = async (req, res) => {
       });
     }
 
-    if (opportunity.ngo.toString() !== req.user.id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this opportunity",
-      });
-    }
+    const { title, description, requiredSkills, duration, location, status } = req.body;
 
-    const { title, description, requiredSkills, duration, location, status } =
-      req.body;
-
-    if (title) opportunity.title = title;
-    if (description) opportunity.description = description;
-    if (requiredSkills) opportunity.requiredSkills = requiredSkills;
-    if (duration) opportunity.duration = duration;
-    if (location) opportunity.location = location;
-    if (status) opportunity.status = status;
     opportunity.title = title || opportunity.title;
     opportunity.description = description || opportunity.description;
     opportunity.requiredSkills = requiredSkills || opportunity.requiredSkills;
@@ -216,15 +196,16 @@ exports.deleteOpportunity = async (req, res) => {
     const opportunity = await Opportunity.findById(id);
 
     if (!opportunity) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Opportunity not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found",
+      });
     }
 
-    if (opportunity.ngo.toString() !== req.user.id.toString()) {
+    if (opportunity.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to delete this opportunity",
+        message: "You can only delete opportunities you created",
       });
     }
 
@@ -237,18 +218,10 @@ exports.deleteOpportunity = async (req, res) => {
 
   } catch (error) {
     console.error("Delete Opportunity Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-    res
-      .status(200)
-      .json({ success: true, message: "Opportunity deleted successfully" });
-  } catch (error) {
-    console.error("Delete Opportunity Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /* ─────────────────────────────
    APPLY TO OPPORTUNITY
@@ -261,45 +234,49 @@ exports.applyToOpportunity = async (req, res) => {
     const opportunity = await Opportunity.findById(id);
 
     if (!opportunity) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Opportunity not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found",
+      });
     }
 
     if (opportunity.status !== "open") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "This opportunity is not open for applications",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "This opportunity is not open for applications",
+      });
     }
 
     const alreadyApplied = opportunity.applicants.some(
-      (applicant) => applicant.user.toString() === userId.toString(),
+      (applicant) => applicant.user.toString() === userId.toString()
     );
 
     if (alreadyApplied) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "You have already applied to this opportunity",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "You have already applied to this opportunity",
+      });
     }
 
     opportunity.applicants.push({ user: userId, status: "pending" });
+
     await opportunity.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "Application submitted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Application submitted successfully",
+    });
+
   } catch (error) {
     console.error("Apply to Opportunity Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+
+/* ─────────────────────────────
+   GET MY APPLICATIONS
+───────────────────────────── */
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -312,7 +289,7 @@ exports.getMyApplications = async (req, res) => {
 
     const applications = opportunities.map((opp) => {
       const application = opp.applicants.find(
-        (app) => app.user.toString() === userId.toString(),
+        (app) => app.user.toString() === userId.toString()
       );
 
       return {
@@ -331,6 +308,7 @@ exports.getMyApplications = async (req, res) => {
     });
 
     res.status(200).json({ success: true, applications });
+
   } catch (error) {
     console.error("Get My Applications Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
