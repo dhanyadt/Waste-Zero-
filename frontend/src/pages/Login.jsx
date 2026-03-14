@@ -4,23 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
 
-  // Show / Hide Password State
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    role: "volunteer",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
-
-  // Handle Input Change
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -28,184 +19,201 @@ const Login = () => {
     });
   };
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Validation
     if (!formData.email || !formData.password) {
       setError("Please fill all fields");
-      setIsLoading(false);
       return;
     }
 
-    // Clear error if valid
+    setIsLoading(true);
     setError("");
 
     try {
-      const userData = {
-        name:
-          formData.role === "volunteer"
-            ? "Volunteer User"
-            : "NGO User",
-        role: formData.role,
-        email: formData.email,
-      };
+      console.log("Sending login request:", formData);
 
-      login(userData);
-      navigate("/dashboard");
-    } catch (error) {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log("Login response:", data);
+
+      if (!response.ok) {
+        setError(data.message || "Invalid email or password");
+        setIsLoading(false);
+        return;
+      }
+
+      // Clear old session completely
+      localStorage.clear();
+
+      // Save new session
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Update React context
+      updateUser(data.user);
+
+      console.log("Login successful:", data.user);
+
+      // Redirect by role
+      if (data.user.role === "ngo") {
+        navigate("/ngo-dashboard");
+      } else {
+        navigate("/volunteer-dashboard");
+      }
+
+    } catch (err) {
+      console.error("Login error:", err);
       setError("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Login with ${provider}`);
-    
-    // Temporary mock login for demo purposes
-    const userData = {
-      name: `${provider} User`,
-      role: "volunteer",
-      email: `user@${provider.toLowerCase()}.com`,
-    };
-    
-    login(userData);
-    navigate("/dashboard");
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
-    <div className="login-container">
-      <div className="login-modal">
-        <div className="modal-content">
-          <div className="left-section">
-            <div className="recycle-content">
-              <div className="recycle-icon">
-                <img src="/images/Logo.png" alt="WasteZero Logo" />
-              </div>
-              <div className="recycle-text">
-                <h3>WasteZero Initiative</h3>
-                <p>Together we care for the future of the next generations</p>
-              </div>
-              <div className="world-recycle-day">
-                <h4>World Recycling Day</h4>
-                <p>17TH MAY</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="right-section">
-            <h2>Login</h2>
-            <p>Enter your details to log in.</p>
-            
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="login-form">
+    <div className="login-page">
+      <div className="login-card">
 
-              {/* Email */}
+        {/* LEFT PANEL */}
+        <div className="lc-left">
+          <div className="lc-left-glow" />
+
+          <div className="lc-brand">
+            <div className="lc-logo-wrap">
+              <img src="/images/Logo.png" alt="WasteZero Logo" />
+            </div>
+
+            <h3>WasteZero Initiative</h3>
+            <p>Together we care for the future of the next generations</p>
+          </div>
+
+          <div className="lc-day">
+            <span>World Recycling Day</span>
+            <strong>17TH MAY</strong>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div className="lc-right">
+
+          <h2>Login</h2>
+          <p>Enter your details to log in.</p>
+
+          {error && <div className="lc-error">{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+
+            {/* EMAIL */}
+            <div className="lc-field">
               <input
                 type="email"
                 name="email"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
-                className="form-input"
+                className="lc-input"
                 required
               />
-              
-              {/* Password + Toggle */}
-              <div className="password-field">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="form-input"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle"
-                >
-                  {showPassword ? "👁️" : "🔒"}
-                </button>
-              </div>
+            </div>
 
-              {/* Role Dropdown */}
-              <select
-                name="role"
-                value={formData.role}
+            {/* PASSWORD */}
+            <div className="lc-field">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
                 onChange={handleChange}
-                className="form-input role-select"
-              >
-                <option value="volunteer">Volunteer</option>
-                <option value="ngo">NGO</option>
-              </select>
+                className="lc-input"
+                style={{ paddingRight: "44px" }}
+                required
+              />
 
-              
-              {/* Continue Button */}
-              <button 
-                type="submit" 
-                className="continue-btn"
-                disabled={isLoading}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="lc-eye"
               >
-                {isLoading ? 'Logging in...' : 'Continue'}
-              </button>
-            </form>
-            
-            <div className="divider">OR</div>
-            
-            <div className="social-buttons">
-              <button 
-                className="social-btn google-btn"
-                onClick={() => handleSocialLogin('Google')}
-              >
-                <span className="social-icon">🔍</span>
-                Continue with Google
-              </button>
-              
-              <button 
-                className="social-btn facebook-btn"
-                onClick={() => handleSocialLogin('Facebook')}
-              >
-                <span className="social-icon">📘</span>
-                Continue with Facebook
-              </button>
-              
-              <button 
-                className="social-btn apple-btn"
-                onClick={() => handleSocialLogin('Apple')}
-              >
-                <span className="social-icon">🍎</span>
-                Continue with Apple
+                {showPassword ? "👁️" : "🔒"}
               </button>
             </div>
-            
-            <div className="register-link">
-              <p>
-                Don't have an account?{' '}
-                <Link to="/register" className="link">
-                  Register
-                </Link>
-              </p>
-            </div>
-            
-            <div className="terms">
-              <small>
-                By continuing, you agree to the updated{' '}
-                <a href="/terms" className="link">Terms of Sale</a>,{' '}
-                <a href="/terms" className="link">Terms of Service</a>, and{' '}
-                <a href="/privacy" className="link">Privacy Policy</a>.
-              </small>
-            </div>
-          </div>
+
+            {/* LOGIN BUTTON */}
+            <button
+              type="submit"
+              className="lc-submit"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in…" : "Continue"}
+            </button>
+
+          </form>
+
+          {/* DIVIDER */}
+          <div className="lc-divider">OR</div>
+
+          {/* GOOGLE LOGIN */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              marginBottom: "10px",
+              border: "1.5px solid #e0e0e0",
+              borderRadius: "11px",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#3c3c3c",
+              background: "#ffffff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            }}
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              style={{ width: "20px", height: "20px" }}
+            />
+            Continue with Google
+          </button>
+
+          {/* REGISTER LINK */}
+          <p className="lc-register-link">
+            Don't have an account?{" "}
+            <Link to="/register" className="lc-link">
+              Register
+            </Link>
+          </p>
+
+          {/* TERMS */}
+          <p className="lc-terms">
+            By continuing, you agree to the updated{" "}
+            <a href="/terms" className="lc-link">Terms of Sale</a>,{" "}
+            <a href="/terms" className="lc-link">Terms of Service</a>, and{" "}
+            <a href="/privacy" className="lc-link">Privacy Policy</a>.
+          </p>
+
         </div>
       </div>
     </div>

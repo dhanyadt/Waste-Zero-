@@ -61,10 +61,10 @@ const ChartCard = () => {
   const { data, title } = getChartData();
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md h-80">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md h-80">
       {/* Header with time period selector */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <h3 className="text-lg font-semibold text-green-700">{title}</h3>
+        <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">{title}</h3>
         
         {/* Time period selector buttons */}
         <div className="flex gap-2 mt-2 sm:mt-0">
@@ -73,7 +73,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "weekly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             Weekly
@@ -83,7 +83,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "monthly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             Monthly
@@ -93,7 +93,7 @@ const ChartCard = () => {
             className={`px-3 py-1 text-sm rounded-lg transition-colors ${
               timePeriod === "yearly"
                 ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             Yearly
@@ -104,15 +104,16 @@ const ChartCard = () => {
       {/* Chart */}
       <ResponsiveContainer width="100%" height="80%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
 
           <XAxis 
             dataKey="period" 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "#6b7280" }}
             tickLine={false}
+            axisLine={{ stroke: "#e5e7eb" }}
           />
           <YAxis 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "#6b7280" }}
             tickLine={false}
             axisLine={false}
           />
@@ -124,6 +125,7 @@ const ChartCard = () => {
               borderRadius: "8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
             }}
+            labelStyle={{ color: "#374151" }}
           />
 
           <Line

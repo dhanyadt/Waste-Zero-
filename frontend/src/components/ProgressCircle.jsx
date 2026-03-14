@@ -8,8 +8,8 @@ const ProgressCircle = () => {
     circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center">
-      <h3 className="text-lg font-semibold mb-4 text-green-700">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex flex-col items-center">
+      <h3 className="text-lg font-semibold mb-4 text-green-700 dark:text-green-400">
         Sustainability Score
       </h3>
 
@@ -23,6 +23,7 @@ const ProgressCircle = () => {
             r={normalizedRadius}
             cx={radius}
             cy={radius}
+            className="dark:stroke-gray-700"
           />
 
           {/* Progress Circle */}
@@ -41,12 +42,12 @@ const ProgressCircle = () => {
         </svg>
 
         {/* Percentage Text */}
-        <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-green-700">
+        <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-green-700 dark:text-green-400">
           {percentage}%
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-gray-500 text-center">
+      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
         Based on recycling performance and pickup efficiency
       </p>
     </div>
