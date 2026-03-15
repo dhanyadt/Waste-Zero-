@@ -23,7 +23,6 @@ const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
 const S = {
-  /* ── rich green+brown page bg, white cards ── */
   page: {
     minHeight: "100vh",
     fontFamily: font,
@@ -78,7 +77,6 @@ const S = {
     transition: "all .2s",
   }),
 
-  /* white cards with green-to-brown top accent */
   card: {
     background: "#ffffff",
     borderRadius: "18px",
@@ -258,6 +256,9 @@ const Profile = () => {
   const [passwordMessage, setPasswordMessage] = useState({ text: "", type: "" });
   const [showPasswords, setShowPasswords] = useState({ currentPassword: false, newPassword: false, confirmPassword: false });
 
+  // ✅ Dark/Light mode toggle
+  const [darkMode, setDarkMode] = useState(false);
+
   const toggleShow = (field) => setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
 
   useEffect(() => {
@@ -328,10 +329,28 @@ const Profile = () => {
   };
 
   return (
-    <div style={S.page}>
+    <div style={{ ...S.page, backgroundColor: darkMode ? "#1a1a1a" : S.page.backgroundColor }}>
       <div style={S.container}>
         <h1 style={S.pageTitle}>My Profile</h1>
         <p style={S.pageSub}>Manage your account information and settings</p>
+
+        {/* ✅ Dark/Light Mode Toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          style={{
+            padding: "8px 14px",
+            borderRadius: "8px",
+            border: "none",
+            cursor: "pointer",
+            background: darkMode ? "#444" : "#ddd",
+            color: darkMode ? "#fff" : "#000",
+            fontWeight: 800,
+            float: "right",
+            marginBottom: "16px"
+          }}
+        >
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
 
         {/* Tabs */}
         <div style={S.tabs}>
@@ -341,7 +360,7 @@ const Profile = () => {
 
         {/* ── PROFILE TAB ── */}
         {activeTab === "profile" && (
-          <div style={S.card}>
+          <div style={{ ...S.card, background: darkMode ? "linear-gradient(to bottom, #003300, #664400)" : S.card.background, color: darkMode ? "#fff" : "#000" }}>
             <div style={S.cardAccent} />
 
             <div style={S.cardHeader}>
@@ -415,7 +434,7 @@ const Profile = () => {
 
         {/* ── PASSWORD TAB ── */}
         {activeTab === "password" && (
-          <div style={S.card}>
+          <div style={{ ...S.card, background: darkMode ? "linear-gradient(to bottom, #003300, #664400)" : S.card.background, color: darkMode ? "#fff" : "#000" }}>
             <div style={S.cardAccent} />
 
             <div style={S.cardHeader}>
