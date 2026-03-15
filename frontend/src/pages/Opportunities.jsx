@@ -12,6 +12,7 @@ const T = {
   bPale:"#efebe9", bSand:"#d7ccc8",
   textDark:"#1c1008", textMid:"#4b3f36", textSoft:"#7b6b63",
 };
+
 const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
@@ -235,8 +236,10 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
 };
 
 const Opportunities = () => {
+
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -246,13 +249,11 @@ const Opportunities = () => {
   const [toast, setToast] = useState(null);
   const [applyModal, setApplyModal] = useState({ isOpen: false, selectedOpp: null });
 
+  // 🌙 DARK MODE STATE
+  const [darkMode, setDarkMode] = useState(false);
+
   const isNgo = user?.role?.toLowerCase() === "ngo";
   const dashboardRoute = isNgo ? "/ngo-dashboard" : "/volunteer-dashboard";
-
-  const showToast = (msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
 
   useEffect(() => {
     fetchOpportunities();
@@ -288,6 +289,15 @@ const Opportunities = () => {
     const opp = opportunities.find(o => o._id === oppId);
     if (opp) {
       setApplyModal({ isOpen: true, selectedOpp: opp });
+  const handleApply = async (opportunityId) => {
+    try {
+      setApplying(opportunityId);
+      await applyToOpportunity(opportunityId);
+      setApplicationStatus(prev => ({ ...prev, [opportunityId]: "pending" }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setApplying(null);
     }
   };
 
@@ -325,29 +335,29 @@ const Opportunities = () => {
     o.requiredSkills?.some(s => s.toLowerCase().includes(search.toLowerCase()))
   );
 
-  if (loading) return (
-    <div style={{
-      display:"flex", minHeight:"100vh", fontFamily:font,
-      backgroundImage:[
-        "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-        "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      ].join(", "),
-    }}>
-      <Sidebar />
-      <main style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <p style={{ color:"rgba(255,255,255,.4)", fontSize:14 }}>Loading opportunities…</p>
-      </main>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div style={{
+        display:"flex",
+        minHeight:"100vh",
+        fontFamily:font,
+        background: darkMode ? "#1a1a1a" : "#f3f4f6"
+      }}>
+        <Sidebar />
+        <main style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <p>Loading opportunities…</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={{
-      display:"flex", minHeight:"100vh", fontFamily:font,
-      backgroundImage:[
-        "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
-        "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      ].join(", "),
+      display:"flex",
+      minHeight:"100vh",
+      fontFamily:font,
+      background: darkMode ? "#002200" : "#c0e0c0"
+      //background: darkMode ? "#1a1a1a" : "#f3f4f6"
     }}>
       <style>{css}</style>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
@@ -363,134 +373,146 @@ const Opportunities = () => {
 
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto" }}>
 
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexWrap:"wrap", gap:16, marginBottom:28 }}>
+        {/* HEADER */}
+        <div style={{
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"space-between",
+          marginBottom:28
+        }}>
+
           <div>
-            <h1 style={{ fontFamily:serif, fontSize:28, fontWeight:800, color:"#fff", margin:"0 0 4px", letterSpacing:"-.4px" }}>
+            <h1 style={{
+              fontFamily:serif,
+              fontSize:28,
+              fontWeight:800,
+              color: darkMode ? "#fff" : T.bDark,
+              margin:"0 0 4px"
+            }}>
               Volunteer Opportunities
             </h1>
-            <p style={{ fontSize:14, color:"rgba(255,255,255,.45)", margin:0 }}>
+
+            <p style={{
+              fontSize:14,
+              color: darkMode ? "#bbb" : T.textSoft,
+              margin:0
+            }}>
               Find ways to make a difference in your community
             </p>
           </div>
-          <button onClick={() => navigate(dashboardRoute)} style={{
-            padding:"10px 18px", borderRadius:10,
-            border:"1px solid rgba(255,255,255,.15)",
-            background:"rgba(255,255,255,.08)",
-            color:"rgba(255,255,255,.7)", fontSize:13.5,
-            fontWeight:600, fontFamily:font, cursor:"pointer",
-            backdropFilter:"blur(8px)",
-            transition:"all .2s",
-          }}>
-            Back to Dashboard
+
+          {/* DARK MODE TOGGLE */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            style={{
+              padding:"8px 14px",
+              borderRadius:"8px",
+              border:"none",
+              cursor:"pointer",
+              background: darkMode ? "#444" : "#ddd",
+              color: darkMode ? "#fff" : "#000",
+              fontWeight:600
+            }}
+          >
+            {darkMode ? "Light Mode" : "Dark Mode"}
           </button>
+
         </div>
 
-        {/* Search */}
+
+        {/* SEARCH */}
         <div style={{ position:"relative", marginBottom:24, maxWidth:480 }}>
-          <Search size={16} color={T.bLight} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
-          <input className="search-input" type="text" placeholder="Search by title, location or skill…"
-            value={search} onChange={e => setSearch(e.target.value)}
+          <Search size={16} color={T.bLight}
+            style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)" }} />
+
+          <input
+            type="text"
+            placeholder="Search by title, location or skill…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
             style={{
-              width:"100%", padding:"11px 16px 11px 40px", boxSizing:"border-box",
-              border:`1.5px solid rgba(255,255,255,.12)`,
-              borderRadius:10, fontSize:14, fontFamily:font,
-              background:"rgba(255,255,255,.08)", color:"#fff",
-              transition:"border-color .2s, box-shadow .2s",
-            }} />
+              width:"100%",
+              padding:"11px 16px 11px 40px",
+              borderRadius:10,
+              border:`1px solid ${T.bSand}`,
+              fontSize:14,
+              fontFamily:font,
+              background: darkMode ? "#2c2c2c" : "#fff",
+              color: darkMode ? "#fff" : "#000"
+            }}
+          />
         </div>
+
 
         {error && (
-          <div style={{ background:"#fef2f2", border:"1px solid #fecaca", color:"#c62828", borderRadius:10, padding:"10px 14px", fontSize:13.5, marginBottom:20 }}>
+          <div style={{
+            background:"#fef2f2",
+            border:"1px solid #fecaca",
+            color:"#c62828",
+            borderRadius:10,
+            padding:"10px 14px",
+            fontSize:13.5,
+            marginBottom:20
+          }}>
             {error}
           </div>
         )}
 
-        {/* NGO notice */}
-        {isNgo && (
-          <div style={{
-            background:"rgba(255,255,255,.07)", border:"1px solid rgba(255,255,255,.12)",
-            borderRadius:12, padding:"12px 16px", marginBottom:20,
-            fontSize:13.5, color:"rgba(255,255,255,.55)",
-            display:"flex", alignItems:"center", gap:8,
-          }}>
-            <span style={{ width:7, height:7, borderRadius:"50%", background:"#eab308", flexShrink:0 }} />
-            You're viewing as NGO — apply buttons are only visible to volunteers.
-          </div>
-        )}
 
         {filtered.length === 0 ? (
-          <div style={{
-            borderRadius:18, background:"#fff",
-            border:`1px solid ${T.bSand}`,
-            padding:"56px 32px", textAlign:"center",
-          }}>
-            <div style={{ width:56, height:56, borderRadius:16, background:T.gPale, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
-              <Search size={24} color={T.gDark} />
-            </div>
-            <p style={{ fontSize:15, fontWeight:600, color:T.textMid, margin:"0 0 4px" }}>No opportunities found</p>
-            <p style={{ fontSize:13, color:T.bLight, margin:0 }}>
-              {search ? "Try a different search term" : "Check back later for new opportunities"}
-            </p>
-          </div>
+          <p>No opportunities found</p>
         ) : (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:16 }}>
-            {filtered.map((opp, i) => (
-              <div key={opp._id} className="opp-card" style={{
-                borderRadius:16, background:"#fff",
-                border:`1px solid ${T.bSand}`,
-                boxShadow:"0 2px 8px rgba(0,0,0,.12)",
-                padding:"22px 24px",
-                display:"flex", flexDirection:"column",
-                animationDelay:`${i*0.04}s`,
-              }}>
-                {/* Card header */}
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:14 }}>
-                  <h3 style={{ margin:0, fontSize:15.5, fontWeight:700, color:T.bDark, lineHeight:1.35 }}>{opp.title}</h3>
-                  <StatusBadge status={opp.status} />
-                </div>
 
-                {/* Meta */}
-                <div style={{ display:"flex", flexDirection:"column", gap:7, marginBottom:14 }}>
-                  <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:13.5, color:T.textMid }}>
-                    <Building2 size={13} color={T.bLight} /> <strong style={{fontWeight:600}}>NGO:</strong> {opp.ngo?.name || opp.createdBy?.name || "—"}
-                  </span>
-                  <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:13.5, color:T.textMid }}>
-                    <MapPin size={13} color={T.bLight} /> <strong style={{fontWeight:600}}>Location:</strong> {opp.location}
-                  </span>
-                  <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:13.5, color:T.textMid }}>
-                    <Clock size={13} color={T.bLight} /> <strong style={{fontWeight:600}}>Duration:</strong> {opp.duration}
-                  </span>
-                </div>
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))",
+            gap:16
+          }}>
 
-                {/* Skills */}
-                {opp.requiredSkills?.length > 0 && (
-                  <div style={{ marginBottom:14 }}>
-                    <p style={{ fontSize:12.5, fontWeight:700, color:T.textSoft, margin:"0 0 7px", textTransform:"uppercase", letterSpacing:".5px" }}>
-                      Skills Required
-                    </p>
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
-                      {opp.requiredSkills.map((skill, idx) => (
-                        <span key={idx} style={{
-                          padding:"3px 10px", borderRadius:20,
-                          background:T.gPale, color:T.gDark,
-                          fontSize:12, fontWeight:500,
-                          border:`1px solid ${T.gSage}`,
-                        }}>{skill}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {filtered.map((opp) => (
 
-                {/* Description */}
+              <div key={opp._id}
+                style={{
+                  borderRadius:16,
+                  background: darkMode ? "#2c2c2c" : "#fff",
+                  border:`1px solid ${T.bSand}`,
+                  padding:"22px 24px"
+                }}>
+
+                <h3 style={{
+                  margin:0,
+                  fontSize:16,
+                  fontWeight:700,
+                  color: darkMode ? "#fff" : T.bDark
+                }}>
+                  {opp.title}
+                </h3>
+
                 <p style={{
-                  fontSize:13.5, color:T.textMid, lineHeight:1.6,
-                  margin:"0 0 16px", flex:1,
-                  display:"-webkit-box", WebkitLineClamp:3,
-                  WebkitBoxOrient:"vertical", overflow:"hidden",
-                }}>{opp.description}</p>
+                  fontSize:13.5,
+                  color: darkMode ? "#ccc" : T.textMid,
+                  marginTop:8
+                }}>
+                  {opp.description}
+                </p>
 
-                {/* Action — only show for volunteers */}
+                <div style={{ marginTop:12 }}>
+
+                  <p style={{ fontSize:13 }}>
+                    <Building2 size={14}/> {opp.ngo?.name}
+                  </p>
+
+                  <p style={{ fontSize:13 }}>
+                    <MapPin size={14}/> {opp.location}
+                  </p>
+
+                  <p style={{ fontSize:13 }}>
+                    <Clock size={14}/> {opp.duration}
+                  </p>
+
+                </div>
+
+
                 {!isNgo && (
                   <div style={{ borderTop:`1px solid ${T.bPale}`, paddingTop:14, marginTop:"auto" }}>
                     {applicationStatus[opp._id] ? (
@@ -521,11 +543,33 @@ const Opportunities = () => {
                       }}>Not Available</button>
                     )}
                   </div>
+                  <button
+                    onClick={() => handleApply(opp._id)}
+                    disabled={applying === opp._id}
+                    style={{
+                      width:"100%",
+                      marginTop:14,
+                      padding:"11px",
+                      background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+                      color:"#fff",
+                      border:"none",
+                      borderRadius:10,
+                      fontWeight:600,
+                      cursor:"pointer"
+                    }}
+                  >
+                    {applying === opp._id ? "Applying…" : "Apply Now"}
+                  </button>
                 )}
+
               </div>
+
             ))}
+
           </div>
+
         )}
+
       </main>
     </div>
   );

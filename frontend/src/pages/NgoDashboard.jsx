@@ -32,12 +32,12 @@ const css = `
   .modal-wrap { animation: scaleIn .18s ease both; }
 `;
 
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, darkMode }) => {
   const cfg = {
     open:         { bg:"#dcfce7", color:"#15803d", dot:"#22c55e", label:"Open"        },
     closed:       { bg:"#fee2e2", color:"#b91c1c", dot:"#ef4444", label:"Closed"      },
     "in-progress":{ bg:"#fef9c3", color:"#a16207", dot:"#eab308", label:"In Progress" },
-  }[status] || { bg:T.bPale, color:T.bLight, dot:T.bSand, label:status };
+  }[status] || { bg: darkMode ? "#333" : T.bPale, color: darkMode ? "#eee" : T.bLight, dot: darkMode ? "#888" : T.bSand, label:status };
 
   return (
     <span style={{
@@ -52,7 +52,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const DeleteModal = ({ isOpen, onClose, onConfirm, title, isDeleting }) => {
+const DeleteModal = ({ isOpen, onClose, onConfirm, title, isDeleting, darkMode }) => {
   if (!isOpen) return null;
   return (
     <div style={{
@@ -61,9 +61,10 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, title, isDeleting }) => {
       display:"flex", alignItems:"center", justifyContent:"center",
     }} onClick={onClose}>
       <div className="modal-wrap" style={{
-        background:"#fff", borderRadius:20, padding:"32px 36px",
+        background: darkMode ? "#1e1e1e" : "#fff", borderRadius:20, padding:"32px 36px",
         maxWidth:420, width:"90%",
-        boxShadow:"0 32px 80px rgba(0,0,0,.3)",
+        boxShadow: darkMode ? "0 32px 80px rgba(0,0,0,.8)" : "0 32px 80px rgba(0,0,0,.3)",
+        color: darkMode ? "#eee" : "#000",
       }} onClick={e => e.stopPropagation()}>
         <div style={{
           width:48, height:48, borderRadius:14,
@@ -72,25 +73,22 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, title, isDeleting }) => {
         }}>
           <AlertTriangle size={22} color="#ef4444" />
         </div>
-        <h3 style={{ fontFamily:serif, fontSize:20, fontWeight:800, color:T.bDark, margin:"0 0 8px" }}>
+        <h3 style={{ fontFamily:serif, fontSize:20, fontWeight:800, margin:"0 0 8px" }}>
           Delete Opportunity
         </h3>
-        <p style={{ fontSize:14, color:T.textSoft, lineHeight:1.65, margin:"0 0 28px" }}>
-          Are you sure you want to delete <strong style={{color:T.textDark}}>"{title}"</strong>?
-          This action cannot be undone.
+        <p style={{ fontSize:14, lineHeight:1.65, margin:"0 0 28px" }}>
+          Are you sure you want to delete <strong>"{title}"</strong>? This action cannot be undone.
         </p>
         <div style={{ display:"flex", gap:12 }}>
           <button onClick={onClose} disabled={isDeleting} style={{
             flex:1, padding:"12px", borderRadius:10,
-            border:`1.5px solid ${T.bSand}`, background:"transparent",
-            color:T.textMid, fontSize:14, fontWeight:600,
-            fontFamily:font, cursor:"pointer",
+            border:`1.5px solid ${darkMode ? "#555" : T.bSand}`, background:"transparent",
+            color: darkMode ? "#ccc" : T.textMid, fontSize:14, fontWeight:600, cursor:"pointer",
           }}>Cancel</button>
           <button onClick={onConfirm} disabled={isDeleting} style={{
             flex:1, padding:"12px", borderRadius:10,
             border:"none", background:"#ef4444",
-            color:"#fff", fontSize:14, fontWeight:600,
-            fontFamily:font, cursor:"pointer",
+            color:"#fff", fontSize:14, fontWeight:600, cursor:"pointer",
             boxShadow:"0 4px 14px rgba(239,68,68,.35)",
           }}>{isDeleting ? "Deleting…" : "Delete"}</button>
         </div>
@@ -109,6 +107,10 @@ const NgoDashboard = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [oppToDelete, setOppToDelete] = useState(null);
+
+  // ← ADDED: dark mode state
+  const [darkMode, setDarkMode] = useState(false);
+  const toggleTheme = () => setDarkMode(!darkMode);
 
   const fetchOpportunities = async () => {
   try {
@@ -186,24 +188,32 @@ const NgoDashboard = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      background:"linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      backgroundImage:[
-        "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 55% 35%, rgba(67,160,71,.08) 0%, transparent 50%)",
-        "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      ].join(", "),
+      background: darkMode 
+        ? "#1a2e1a"
+        : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
+      color: darkMode ? "#eee" : "#000"
     }}>
       <style>{css}</style>
       <Sidebar />
-      <main style={{ flex:1, padding:"40px 36px", overflowY:"auto" }}>
+      <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
+
+        {/* ← TOGGLE BUTTON */}
+        <button onClick={toggleTheme} style={{
+          position:"absolute", top:20, right:20,
+          padding:"8px 14px", borderRadius:12, border:"none",
+          background: darkMode ? "#eee" : "#333",
+          color: darkMode ? "#333" : "#fff",
+          cursor:"pointer", fontWeight:600, fontSize:12,
+        }}>
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
 
         {/* Header */}
         <div style={{ marginBottom:32 }}>
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:6 }}>
             <div style={{
               width:44, height:44, borderRadius:12, flexShrink:0,
-              background:"rgba(255,255,255,.08)",
+              background: darkMode ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.08)",
               border:"1px solid rgba(255,255,255,.12)",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>
@@ -224,36 +234,40 @@ const NgoDashboard = () => {
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px,1fr))", gap:14, marginBottom:24 }}>
           {stats.map(({ label, value, accent }, i) => (
             <div key={label} className="ngo-card" style={{
-              borderRadius:16, background:"#fff",
+              borderRadius:16, background: darkMode ? "#1e1e1e" : "#fff",
               borderTop:`3px solid ${accent}`,
               padding:"20px 22px",
-              boxShadow:"0 2px 8px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.18)",
+              boxShadow: darkMode 
+                ? "0 2px 8px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4)"
+                : "0 2px 8px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.18)",
               animationDelay:`${i*0.06}s`,
+              color: darkMode ? "#eee" : T.textDark,
             }}>
-              <div style={{ fontFamily:serif, fontSize:32, fontWeight:900, color:T.bDark, lineHeight:1 }}>{value}</div>
-              <div style={{ fontSize:12, color:T.textSoft, fontWeight:600, marginTop:6, textTransform:"uppercase", letterSpacing:".5px" }}>{label}</div>
+              <div style={{ fontFamily:serif, fontSize:32, fontWeight:900, lineHeight:1 }}>{value}</div>
+              <div style={{ fontSize:12, color: darkMode ? "#ccc" : T.textSoft, fontWeight:600, marginTop:6, textTransform:"uppercase", letterSpacing:".5px" }}>{label}</div>
             </div>
           ))}
         </div>
 
         {/* Org Profile */}
         <div className="ngo-card" style={{
-          borderRadius:18, background:"#fff",
-          border:`1px solid ${T.bSand}`,
-          boxShadow:"0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
           padding:"26px 30px", marginBottom:18,
           position:"relative", overflow:"hidden",
           animationDelay:"0.1s",
+          color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
-          <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:T.bDark, margin:"0 0 16px", paddingBottom:12, borderBottom:`1px solid ${T.bPale}` }}>
+          <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:"0 0 16px", paddingBottom:12, borderBottom:`1px solid ${darkMode ? "#555" : T.bPale}` }}>
             Organization Profile
           </h2>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(190px,1fr))", gap:"14px 28px" }}>
             {orgInfo.map(({ label, value }) => (
               <div key={label}>
-                <div style={{ fontSize:11, fontWeight:700, color:T.bLight, textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:4 }}>{label}</div>
-                <div style={{ fontSize:14, color:T.textDark, fontWeight:500 }}>{value}</div>
+                <div style={{ fontSize:11, fontWeight:700, color: darkMode ? "#ccc" : T.bLight, textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:4 }}>{label}</div>
+                <div style={{ fontSize:14, color: darkMode ? "#eee" : T.textDark, fontWeight:500 }}>{value}</div>
               </div>
             ))}
           </div>
@@ -261,18 +275,19 @@ const NgoDashboard = () => {
 
         {/* Create CTA */}
         <div className="ngo-card" style={{
-          borderRadius:18, background:"#fff",
-          border:`1px solid ${T.bSand}`,
-          boxShadow:"0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
           padding:"22px 30px", marginBottom:18,
           display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16,
           position:"relative", overflow:"hidden",
           animationDelay:"0.15s",
+          color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.gDark}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
           <div>
-            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:T.bDark, margin:"0 0 3px" }}>Post an Opportunity</h2>
-            <p style={{ fontSize:13, color:T.textSoft, margin:0 }}>Create recycling drives, collection events, and volunteer opportunities.</p>
+            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:"0 0 3px" }}>Post an Opportunity</h2>
+            <p style={{ fontSize:13, color: darkMode ? "#ccc" : T.textSoft, margin:0 }}>Create recycling drives, collection events, and volunteer opportunities.</p>
           </div>
           <button className="btn-primary" onClick={() => navigate("/create-opportunity")} style={{
             display:"inline-flex", alignItems:"center", gap:7,
@@ -288,17 +303,18 @@ const NgoDashboard = () => {
 
         {/* Opportunities */}
         <div className="ngo-card" style={{
-          borderRadius:18, background:"#fff",
-          border:`1px solid ${T.bSand}`,
-          boxShadow:"0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
           padding:"26px 30px", marginBottom:20,
           position:"relative", overflow:"hidden",
           animationDelay:"0.2s",
+          color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16, paddingBottom:12, borderBottom:`1px solid ${T.bPale}` }}>
-            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, color:T.bDark, margin:0 }}>All Opportunities</h2>
-            <span style={{ fontSize:12.5, color:T.textSoft, fontWeight:500 }}>{opportunities.length} total</span>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16, paddingBottom:12, borderBottom:`1px solid ${darkMode ? "#555" : T.bPale}` }}>
+            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:0 }}>All Opportunities</h2>
+            <span style={{ fontSize:12.5, color: darkMode ? "#ccc" : T.textSoft, fontWeight:500 }}>{opportunities.length} total</span>
           </div>
 
           {error && (
@@ -312,28 +328,29 @@ const NgoDashboard = () => {
               <div style={{ width:52, height:52, borderRadius:14, background:T.bPale, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:4 }}>
                 <Plus size={22} color={T.bLight} />
               </div>
-              <p style={{ fontSize:14.5, fontWeight:600, color:T.textMid, margin:0 }}>No opportunities yet</p>
-              <p style={{ fontSize:13, color:T.bLight, margin:0 }}>Click "Create Opportunity" above to get started</p>
+              <p style={{ fontSize:14.5, fontWeight:600, color: darkMode ? "#ccc" : T.textMid, margin:0 }}>No opportunities yet</p>
+              <p style={{ fontSize:13, color: darkMode ? "#aaa" : T.bLight, margin:0 }}>Click "Create Opportunity" above to get started</p>
             </div>
           ) : (
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {opportunities.map((opp, i) => (
                 <div key={opp._id} className="ngo-opp-row" style={{
                   padding:"16px 18px", borderRadius:12,
-                  border:`1px solid ${T.bSand}`, background:"#fdfaf6",
+                  border:`1px solid ${darkMode ? "#555" : T.bSand}`, background: darkMode ? "#2a2a2a" : "#fdfaf6",
                   animationDelay:`${0.2 + i*0.04}s`,
+                  color: darkMode ? "#eee" : T.textDark,
                 }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:8 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <h3 style={{ margin:"0 0 3px", fontSize:15, fontWeight:700, color:T.bDark }}>{opp.title}</h3>
+                      <h3 style={{ margin:"0 0 3px", fontSize:15, fontWeight:700, color: darkMode ? "#fff" : T.bDark }}>{opp.title}</h3>
                       <p style={{
-                        margin:0, fontSize:13, color:T.textMid, lineHeight:1.5,
+                        margin:0, fontSize:13, color: darkMode ? "#ccc" : T.textMid, lineHeight:1.5,
                         display:"-webkit-box", WebkitLineClamp:2,
                         WebkitBoxOrient:"vertical", overflow:"hidden",
                       }}>{opp.description}</p>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0 }}>
-                      <StatusBadge status={opp.status} />
+                      <StatusBadge status={opp.status} darkMode={darkMode} />
                       <button className="btn-edit" onClick={() => navigate(`/edit-opportunity/${opp._id}`)}
                         disabled={deletingId === opp._id}
                         style={{
@@ -397,8 +414,19 @@ const NgoDashboard = () => {
   </div>
 )}
 
+                  {opp.requiredSkills?.length > 0 && (
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
+                      {opp.requiredSkills.map((skill, idx) => (
+                        <span key={idx} style={{
+                          padding:"3px 9px", borderRadius:20,
+                          background: darkMode ? "#333" : T.gPale, color: darkMode ? "#eee" : T.gDark,
+                          fontSize:11.5, fontWeight:500, border:`1px solid ${darkMode ? "#555" : T.gSage}`,
+                        }}>{skill}</span>
+                      ))}
+                    </div>
+                  )}
 
-                  <div style={{ display:"flex", gap:14, fontSize:12, color:T.textSoft }}>
+                  <div style={{ display:"flex", gap:14, fontSize:12, color: darkMode ? "#ccc" : T.textSoft }}>
                     {opp.location && <span style={{ display:"flex", alignItems:"center", gap:4 }}><MapPin size={11} />{opp.location}</span>}
                     {opp.duration && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Clock size={11} />{opp.duration}</span>}
                   </div>
@@ -414,6 +442,7 @@ const NgoDashboard = () => {
           onConfirm={handleConfirmDelete}
           title={oppToDelete?.title}
           isDeleting={deletingId !== null}
+          darkMode={darkMode}
         />
       </main>
     </div>

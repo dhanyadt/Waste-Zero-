@@ -1,0 +1,13 @@
+{
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "postcss.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.css": "css"
+  },
+  "tailwindCSS.includeLanguages": {
+    "css": "css"
+  }
+}
