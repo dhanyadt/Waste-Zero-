@@ -66,7 +66,18 @@ const opportunitySchema = new mongoose.Schema(
           ref: "User",
           required: true,
         },
-
+        name: {
+          type: String,
+          trim: true,
+        },
+        location: {
+          type: String,
+          trim: true,
+        },
+        skills: [{
+          type: String,
+          trim: true,
+        }],
         status: {
           type: String,
           enum: ["pending", "accepted", "rejected"],

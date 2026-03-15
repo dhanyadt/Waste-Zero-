@@ -30,6 +30,10 @@ export const getAllOpportunitiesForNgo = () => API.get("/opportunities/my-opport
 // Any user: fetch only opportunities THEY created
 export const getMyOpportunities = () => API.get("/opportunities/my-opportunities");
 
+// NGO: get applicants with skill match for an opportunity
+export const getOpportunityApplicants = (id) =>
+  API.get(`/opportunities/${id}/applicants`);
+
 // Single opportunity
 export const getOpportunityById = (id) => API.get(`/opportunities/${id}`);
 
@@ -39,5 +43,5 @@ export const updateOpportunity = (id, data)  => API.put(`/opportunities/${id}`, 
 export const deleteOpportunity = (id)        => API.delete(`/opportunities/${id}`);
 
 // Volunteer: apply + view own applications
-export const applyToOpportunity = (id) => API.post(`/opportunities/${id}/apply`);
+export const applyToOpportunity = (id, data = {}) => API.post(`/opportunities/${id}/apply`, data);
 export const getMyApplications  = ()   => API.get("/opportunities/my-applications");
