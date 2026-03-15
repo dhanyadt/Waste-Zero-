@@ -230,6 +230,7 @@ exports.applyToOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
+    const { name, location, skills } = req.body;
 
     const opportunity = await Opportunity.findById(id);
 
@@ -258,7 +259,13 @@ exports.applyToOpportunity = async (req, res) => {
       });
     }
 
-    opportunity.applicants.push({ user: userId, status: "pending" });
+    opportunity.applicants.push({ 
+      user: userId, 
+      name: name || req.user.name,
+      location: location || req.user.location,
+      skills: skills || [],
+      status: "pending" 
+    });
 
     await opportunity.save();
 
@@ -311,6 +318,63 @@ exports.getMyApplications = async (req, res) => {
 
   } catch (error) {
     console.error("Get My Applications Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+/* ─────────────────────────────
+   GET APPLICANTS WITH SKILL MATCH
+───────────────────────────── */
+exports.getOpportunityApplicants = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const opportunity = await Opportunity.findById(id)
+      .populate("applicants.user", "name email");
+
+    if (!opportunity) {
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found",
+      });
+    }
+
+      const oppSkills = (opportunity.requiredSkills || []).map(s => s.toLowerCase());
+
+const applicants = opportunity.applicants.map((app) => {
+
+  const volunteerSkills = (app.skills || []).map(s => s.toLowerCase());
+
+  const matchedSkills = volunteerSkills.filter(skill =>
+    oppSkills.includes(skill)
+  );
+
+  const matchPercent =
+    oppSkills.length > 0
+      ? Math.round((matchedSkills.length / oppSkills.length) * 100)
+      : 0;
+
+  return {
+    user: app.user,
+    name: app.name,
+    location: app.location,
+    skills: volunteerSkills,
+    matchedSkills,
+    matchPercent,
+    status: app.status,
+  };
+});
+
+    // Sort best match first
+    applicants.sort((a, b) => b.matchPercent - a.matchPercent);
+
+    res.status(200).json({
+      success: true,
+      applicants,
+    });
+
+  } catch (error) {
+    console.error("Get Applicants Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

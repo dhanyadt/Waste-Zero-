@@ -14,6 +14,7 @@ import Opportunities from "./pages/Opportunities";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./pages/AuthCallback";
 import SelectRole from "./pages/SelectRole";
+import Messages from "./pages/Messages";
 
 function App() {
   return (
@@ -90,6 +91,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/messages"
+  element={
+    <ProtectedRoute>
+      <Messages />
+    </ProtectedRoute>
+  }
+/>
+
+
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/select-role" element={<SelectRole />} />
 

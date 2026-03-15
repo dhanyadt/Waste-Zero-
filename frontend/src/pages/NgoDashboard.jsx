@@ -4,6 +4,7 @@ import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { getAllOpportunitiesForNgo, deleteOpportunity } from "../services/api";
 import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2 } from "lucide-react";
+import { getOpportunityApplicants } from "../services/api";
 
 const T = {
   gDeep:"#1b5e20", gDark:"#2e7d32", gMid:"#43a047", gLight:"#81c784",
@@ -102,6 +103,7 @@ const NgoDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
+  const [applicants, setApplicants] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
@@ -109,16 +111,32 @@ const NgoDashboard = () => {
   const [oppToDelete, setOppToDelete] = useState(null);
 
   const fetchOpportunities = async () => {
-    try {
-      const response = await getAllOpportunitiesForNgo();
-      setOpportunities(response.data.opportunities || []);
-    } catch (err) {
-      console.error("Failed to fetch opportunities:", err);
-      setError("Failed to load opportunities");
-    } finally {
-      setLoading(false);
+  try {
+    const response = await getAllOpportunitiesForNgo();
+    const opps = response.data.opportunities || [];
+
+    setOpportunities(opps);
+
+    const data = {};
+
+    for (let opp of opps) {
+      try {
+        const res = await getOpportunityApplicants(opp._id);
+        data[opp._id] = res.data.applicants || [];
+      } catch (err) {
+        data[opp._id] = [];
+      }
     }
-  };
+
+    setApplicants(data);
+
+  } catch (err) {
+    console.error("Failed to fetch opportunities:", err);
+    setError("Failed to load opportunities");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!authLoading && user) fetchOpportunities();
@@ -341,17 +359,44 @@ const NgoDashboard = () => {
                     </div>
                   </div>
 
-                  {opp.requiredSkills?.length > 0 && (
-                    <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
-                      {opp.requiredSkills.map((skill, idx) => (
-                        <span key={idx} style={{
-                          padding:"3px 9px", borderRadius:20,
-                          background:T.gPale, color:T.gDark,
-                          fontSize:11.5, fontWeight:500, border:`1px solid ${T.gSage}`,
-                        }}>{skill}</span>
-                      ))}
-                    </div>
-                  )}
+                  
+                   
+{/* Required Skills */}
+{opp.requiredSkills?.length > 0 && (
+  <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
+    {opp.requiredSkills.map((skill, idx) => (
+      <span
+        key={idx}
+        style={{
+          padding:"3px 9px",
+          borderRadius:20,
+          background:T.gPale,
+          color:T.gDark,
+          fontSize:11.5,
+          fontWeight:500,
+          border:`1px solid ${T.gSage}`,
+        }}
+      >
+        {skill}
+      </span>
+    ))}
+  </div>
+)}
+
+{/* Applicants Skill Match */}
+{applicants[opp._id]?.length > 0 && (
+  <div style={{ marginTop:8 }}>
+    {applicants[opp._id].slice(0,3).map((app, i) => (
+      <div key={i} style={{ fontSize:12.5 }}>
+        {app.name} —
+        <span style={{ color:"#16a34a", fontWeight:600 }}>
+          {" "}{app.matchPercent}% match
+        </span>
+      </div>
+    ))}
+  </div>
+)}
+
 
                   <div style={{ display:"flex", gap:14, fontSize:12, color:T.textSoft }}>
                     {opp.location && <span style={{ display:"flex", alignItems:"center", gap:4 }}><MapPin size={11} />{opp.location}</span>}

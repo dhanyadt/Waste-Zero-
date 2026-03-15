@@ -12,9 +12,9 @@ const {
   deleteOpportunity,
   getMyOpportunities,
   getMyApplications,
-  applyToOpportunity
+  applyToOpportunity,
+  getOpportunityApplicants
 } = require("../controllers/opportunityController");
-
 
 // ─────────────────────────────
 // CREATE OPPORTUNITY (NGO only)
@@ -39,7 +39,10 @@ router.get("/my-applications", authMiddleware, roleMiddleware("volunteer"), getM
 // ─────────────────────────────
 router.post("/:id/apply", authMiddleware, roleMiddleware("volunteer"), applyToOpportunity);
 
-
+// ─────────────────────────────
+// NGO: VIEW APPLICANTS WITH SKILL MATCH
+// ─────────────────────────────
+router.get("/:id/applicants", authMiddleware, roleMiddleware("ngo"), getOpportunityApplicants);
 // ─────────────────────────────
 // PUBLIC ROUTES
 // ─────────────────────────────

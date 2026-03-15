@@ -92,6 +92,148 @@ const Toast = ({ msg, type, onClose }) => (
   </div>
 );
 
+const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
+  const [formData, setFormData] = useState({ name: '', location: '', skills: '' });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!isOpen || !opp) return null;
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.location.trim()) newErrors.location = 'Location is required';
+    if (!formData.skills.trim()) newErrors.skills = 'Skills are required (comma-separated)';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setSubmitting(true);
+    try {
+      const skillsArray = formData.skills.split(',').map(s => s.trim()).filter(s => s);
+      await onSubmit(opp._id, { ...formData, skills: skillsArray });
+      onClose();
+    } catch (err) {
+      // Toast handled in parent
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+      padding: '20px',
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, padding: '32px', width: '100%', maxWidth: 420,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto',
+        animation: 'scaleIn 0.2s ease-out',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.bDark }}>
+            Apply to "{opp.title}"
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, opacity: 0.7 }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T.textMid, marginBottom: 6 }}>
+              Full Name *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter your full name"
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 12, border: `1px solid ${T.bPale}`,
+                fontSize: 15, fontFamily: font,
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+              }}
+              className={errors.name ? 'error' : ''}
+            />
+            {errors.name && <p style={{ fontSize: 13, color: '#ef4444', marginTop: 4 }}>{errors.name}</p>}
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T.textMid, marginBottom: 6 }}>
+              Location *
+            </label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="City, State or Remote"
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 12, border: `1px solid ${T.bPale}`,
+                fontSize: 15, fontFamily: font,
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+              }}
+              className={errors.location ? 'error' : ''}
+            />
+            {errors.location && <p style={{ fontSize: 13, color: '#ef4444', marginTop: 4 }}>{errors.location}</p>}
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T.textMid, marginBottom: 6 }}>
+              Skills (comma-separated) *
+            </label>
+            <textarea
+              rows={3}
+              value={formData.skills}
+              onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+              placeholder="e.g. Web Development, Community Outreach, Data Analysis"
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: 12, border: `1px solid ${T.bPale}`,
+                fontSize: 15, fontFamily: font, resize: 'vertical',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+              }}
+              className={errors.skills ? 'error' : ''}
+            />
+            {errors.skills && <p style={{ fontSize: 13, color: '#ef4444', marginTop: 4 }}>{errors.skills}</p>}
+          </div>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                flex: 1, padding: '14px', borderRadius: 12, border: `1px solid ${T.bPale}`,
+                background: T.bPale, color: T.bDark, fontSize: 15, fontWeight: 600,
+                cursor: 'pointer', fontFamily: font,
+              }}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                flex: 1, padding: '14px', borderRadius: 12, border: 'none',
+                background: `linear-gradient(135deg, ${T.gMid}, ${T.gDark})`, color: '#fff',
+                fontSize: 15, fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer',
+                fontFamily: font, boxShadow: '0 4px 14px rgba(67,160,71,0.4)',
+              }}
+            >
+              {submitting ? 'Submitting...' : 'Apply Now'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Opportunities = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -102,6 +244,7 @@ const Opportunities = () => {
   const [applicationStatus, setApplicationStatus] = useState({});
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
+  const [applyModal, setApplyModal] = useState({ isOpen: false, selectedOpp: null });
 
   const isNgo = user?.role?.toLowerCase() === "ngo";
   const dashboardRoute = isNgo ? "/ngo-dashboard" : "/volunteer-dashboard";
@@ -141,18 +284,39 @@ const Opportunities = () => {
     }
   };
 
-  const handleApply = async (opportunityId) => {
-    try {
-      setApplying(opportunityId);
-      await applyToOpportunity(opportunityId);
-      setApplicationStatus(prev => ({ ...prev, [opportunityId]: "pending" }));
-      showToast("Application submitted successfully!", "success");
-    } catch (err) {
-      showToast(err.response?.data?.message || "Failed to apply", "error");
-    } finally {
-      setApplying(null);
+  const openApplyModal = (oppId) => {
+    const opp = opportunities.find(o => o._id === oppId);
+    if (opp) {
+      setApplyModal({ isOpen: true, selectedOpp: opp });
     }
   };
+
+  const closeApplyModal = () => {
+    setApplyModal({ isOpen: false, selectedOpp: null });
+  };
+
+  const handleApply = async (oppId, formData) => {
+  try {
+    setApplying(oppId);
+
+    await applyToOpportunity(oppId, formData);
+
+    setApplicationStatus(prev => ({
+      ...prev,
+      [oppId]: "pending"
+    }));
+
+    showToast("Application submitted successfully!", "success");
+
+  } catch (err) {
+    showToast(
+      err.response?.data?.message || "Failed to apply for opportunity",
+      "error"
+    );
+  } finally {
+    setApplying(null);
+  }
+};
 
   const filtered = opportunities.filter(o =>
     !search ||
@@ -187,6 +351,14 @@ const Opportunities = () => {
     }}>
       <style>{css}</style>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      {applyModal.isOpen && (
+        <ApplyModal
+          isOpen={applyModal.isOpen}
+          onClose={closeApplyModal}
+          onSubmit={handleApply}
+          opp={applyModal.selectedOpp}
+        />
+      )}
       <Sidebar />
 
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto" }}>
@@ -325,19 +497,19 @@ const Opportunities = () => {
                       <AppStatusBadge status={applicationStatus[opp._id]} />
                     ) : opp.status === "open" ? (
                       <button className="btn-apply"
-                        onClick={() => handleApply(opp._id)}
-                        disabled={applying === opp._id}
+                        onClick={() => openApplyModal(opp._id)}
+                        disabled={applicationStatus[opp._id]}
                         style={{
                           width:"100%", padding:"11px",
-                          background: applying === opp._id
+                          background: applicationStatus[opp._id]
                             ? "#9ca3af"
                             : `linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
                           color:"#fff", border:"none", borderRadius:10,
                           fontSize:14, fontWeight:600, fontFamily:font,
-                          cursor: applying === opp._id ? "not-allowed" : "pointer",
-                          boxShadow: applying === opp._id ? "none" : "0 4px 14px rgba(46,125,50,.3)",
+                          cursor: applicationStatus[opp._id] ? "not-allowed" : "pointer",
+                          boxShadow: applicationStatus[opp._id] ? "none" : "0 4px 14px rgba(46,125,50,.3)",
                         }}>
-                        {applying === opp._id ? "Applying…" : "Apply Now"}
+                        {applicationStatus[opp._id] ? "Applied" : "Apply Now"}
                       </button>
                     ) : (
                       <button disabled style={{
