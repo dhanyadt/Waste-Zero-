@@ -22,11 +22,29 @@ exports.sendMessage = async (req, res) => {
       content,
     });
 
+    // 🔥 SOCKET EMIT (REAL-TIME MESSAGE)
+    const io = req.app.get("io");
+
+    io.emit("newMessage", {
+      senderId: req.user._id,
+      receiverId: receiver_id,
+      content,
+      createdAt: message.createdAt,
+    });
+
+    // 🔔 OPTIONAL NOTIFICATION EVENT
+    io.emit("notification", {
+      type: "message",
+      to: receiver_id,
+      message: "You have a new message",
+    });
+
     res.status(201).json({
       success: true,
       message: "Message sent",
       data: message,
     });
+
   } catch (error) {
     console.error("Send Message Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -48,13 +66,13 @@ exports.getMessages = async (req, res) => {
         { sender_id: req.user._id, receiver_id: userId },
         { sender_id: userId, receiver_id: req.user._id },
       ],
-    })
-      .sort({ timestamp: 1 });
+    }).sort({ createdAt: 1 });
 
     res.status(200).json({
       success: true,
       messages,
     });
+
   } catch (error) {
     console.error("Get Messages Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
