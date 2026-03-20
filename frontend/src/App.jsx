@@ -13,6 +13,8 @@ import EditOpportunity from "./pages/EditOpportunity";
 import Opportunities from "./pages/Opportunities";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./pages/AuthCallback";
+import ChatPage from "./pages/ChatPage";
+import Matches from "./pages/Matches";
 import SelectRole from "./pages/SelectRole";
 import Messages from "./pages/Messages";
 
@@ -92,6 +94,21 @@ function App() {
             }
           />
           <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/matches"
+            element={
+              <ProtectedRoute>
+                <Matches />
+              </ProtectedRoute>
+            }
+          />
   path="/messages"
   element={
     <ProtectedRoute>
