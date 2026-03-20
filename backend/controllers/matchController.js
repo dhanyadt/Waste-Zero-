@@ -34,10 +34,26 @@ exports.getMatches = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
+    // 🔥 SOCKET EMIT (NEW MATCH EVENT)
+    const io = req.app.get("io");
+
+    io.emit("newMatch", {
+      userId: req.user._id,
+      count: matched.length,
+    });
+
+    // 🔔 NOTIFICATION
+    io.emit("notification", {
+      type: "match",
+      to: req.user._id,
+      message: `You have ${matched.length} new matches`,
+    });
+
     res.status(200).json({
       success: true,
       matches: matched,
     });
+
   } catch (error) {
     console.error("Get Matches Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -90,10 +106,26 @@ exports.getMatchedVolunteers = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
+    // 🔥 SOCKET EMIT (NGO side match)
+    const io = req.app.get("io");
+
+    io.emit("newMatch", {
+      opportunityId,
+      count: matched.length,
+    });
+
+    // 🔔 NOTIFICATION
+    io.emit("notification", {
+      type: "match",
+      to: req.user._id,
+      message: `Found ${matched.length} matching volunteers`,
+    });
+
     res.status(200).json({
       success: true,
       matches: matched,
     });
+
   } catch (error) {
     console.error("Get Matched Volunteers Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
