@@ -51,6 +51,7 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/opportunities", require("./routes/opportunityRoutes"));
 app.use("/api/matches", matchRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/admin", require("./routes/adminRoutes"));
 
 // Root route
 app.get("/", (req, res) => {

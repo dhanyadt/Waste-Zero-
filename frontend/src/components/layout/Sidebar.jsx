@@ -150,13 +150,21 @@ const Sidebar = () => {
     { label: "Opportunities",  path: "/opportunities", icon: <Target size={14} /> },
     { label: "Messages",       path: "/messages",      icon: <MessageSquare size={14} /> },
     { label: "My Impact",      path: "/impact",        icon: <TrendingUp size={14} /> },
+    { label: "Reports", path: "/admin/reports" },
+{ label: "Logs", path: "/admin/logs" },
   ];
 
   const settingsNav = [
     { label: "My Profile",    path: "/profile",  icon: <User size={14} /> },
     { label: "Settings",      path: "/settings", icon: <Settings size={14} /> },
     { label: "Help & Support", path: "/help",    icon: <HelpCircle size={14} /> },
-    ...(user?.role === "admin" ? [{ label: "Admin Panel", path: "/admin", icon: <Shield size={14} /> }] : []),
+    ...(user?.role === "admin"
+  ? [
+      { label: "Admin Dashboard", path: "/admin", icon: <Shield size={14} /> },
+      { label: "Manage Users", path: "/admin/users", icon: <User size={14} /> },
+      { label: "Manage Opportunities", path: "/admin/opportunities", icon: <Target size={14} /> },
+    ]
+  : [])
   ];
 
   const initials = user?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0,2) || "U";

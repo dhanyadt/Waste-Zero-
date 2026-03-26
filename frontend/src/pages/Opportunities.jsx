@@ -286,20 +286,12 @@ const Opportunities = () => {
   };
 
   const openApplyModal = (oppId) => {
-    const opp = opportunities.find(o => o._id === oppId);
-    if (opp) {
-      setApplyModal({ isOpen: true, selectedOpp: opp });
-  const handleApply = async (opportunityId) => {
-    try {
-      setApplying(opportunityId);
-      await applyToOpportunity(opportunityId);
-      setApplicationStatus(prev => ({ ...prev, [opportunityId]: "pending" }));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setApplying(null);
-    }
-  };
+  const opp = opportunities.find(o => o._id === oppId);
+  if (opp) {
+    setApplyModal({ isOpen: true, selectedOpp: opp });
+  }
+};
+  
 
   const closeApplyModal = () => {
     setApplyModal({ isOpen: false, selectedOpp: null });
@@ -309,7 +301,28 @@ const Opportunities = () => {
   try {
     setApplying(oppId);
 
+    const handleApply = async (oppId, formData) => {
+  try {
+    setApplying(oppId);
+
     await applyToOpportunity(oppId, formData);
+
+    setApplicationStatus(prev => ({
+      ...prev,
+      [oppId]: "pending"
+    }));
+
+    setToast({ msg: "Application submitted successfully!", type: "success" });
+
+  } catch (err) {
+    setToast({
+      msg: err.response?.data?.message || "Failed to apply for opportunity",
+      type: "error"
+    });
+  } finally {
+    setApplying(null);
+  }
+};applyToOpportunity(oppId, formData);
 
     setApplicationStatus(prev => ({
       ...prev,
@@ -543,23 +556,6 @@ const Opportunities = () => {
                       }}>Not Available</button>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleApply(opp._id)}
-                    disabled={applying === opp._id}
-                    style={{
-                      width:"100%",
-                      marginTop:14,
-                      padding:"11px",
-                      background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
-                      color:"#fff",
-                      border:"none",
-                      borderRadius:10,
-                      fontWeight:600,
-                      cursor:"pointer"
-                    }}
-                  >
-                    {applying === opp._id ? "Applying…" : "Apply Now"}
-                  </button>
                 )}
 
               </div>

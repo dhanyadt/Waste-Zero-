@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth, AuthProvider } from "./context/AuthContext";
-import Sidebar from "./components/layout/Sidebar";
+import { AuthProvider } from "./context/AuthContext";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,17 +15,25 @@ import AuthCallback from "./pages/AuthCallback";
 import SelectRole from "./pages/SelectRole";
 import Messages from "./pages/Messages";
 
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminOpportunities from "./pages/AdminOpportunities";
+import AdminReports from "./components/layout/AdminReports";
+import AdminLogs from "./components/layout/AdminLogs";
+import AdminRoute from "./components/layout/AdminRoute";
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* ── Public ───────────────────────────────────────── */}
+
+          {/* Public */}
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ── Auto-redirect based on role ───────────────────── */}
+          {/* Dashboard Redirect */}
           <Route
             path="/dashboard"
             element={
@@ -36,7 +43,7 @@ function App() {
             }
           />
 
-          {/* ── NGO routes ───────────────────────────────────── */}
+          {/* NGO */}
           <Route
             path="/ngo-dashboard"
             element={
@@ -46,7 +53,6 @@ function App() {
             }
           />
 
-          {/* Protected Create Opportunity (NGO Only) */}
           <Route
             path="/create-opportunity"
             element={
@@ -55,6 +61,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/edit-opportunity/:id"
             element={
@@ -64,7 +71,7 @@ function App() {
             }
           />
 
-          {/* ── Volunteer routes ─────────────────────────────── */}
+          {/* Volunteer */}
           <Route
             path="/volunteer-dashboard"
             element={
@@ -74,7 +81,7 @@ function App() {
             }
           />
 
-          {/* ── Shared protected routes ──────────────────────── */}
+          {/* Shared */}
           <Route
             path="/profile"
             element={
@@ -83,6 +90,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/opportunities"
             element={
@@ -91,21 +99,30 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
-  path="/messages"
-  element={
-    <ProtectedRoute>
-      <Messages />
-    </ProtectedRoute>
-  }
-/>
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            }
+          />
 
+          {/* ADMIN ROUTES */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/opportunities" element={<AdminRoute><AdminOpportunities /></AdminRoute>} />
+          <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+          <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
 
+          {/* Others */}
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/select-role" element={<SelectRole />} />
 
-          {/* ── Catch all ────────────────────────────────────── */}
+          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" />} />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
