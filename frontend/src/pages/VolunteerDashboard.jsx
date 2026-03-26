@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 // ✅ FIXED IMPORT
 import { getAllOpportunities, getMyApplications } from "../services/api";
-
+import { getMatches } from "../services/api";
 import { ArrowRight, MapPin, Clock, Building2, User, Sun, Moon } from "lucide-react";
 
 const T = {
@@ -66,37 +66,40 @@ const VolunteerDashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
-
+  const [matches, setMatches] = useState([]);
+  
   const fetchData = async () => {
-    try {
-      setLoadingData(true);
-      const appResponse = await getMyApplications();
-      setApplications(appResponse.data.applications || []);
+  try {
+    setLoadingData(true);
 
-      // ✅ FIXED HERE
-      const oppResponse = await getAllOpportunities();
-      setOpportunities(oppResponse.data.opportunities || []);
+    const appResponse = await getMyApplications();
+    setApplications(appResponse.data.applications || []);
 
-    } catch (err) {
-      console.error("Failed to fetch data:", err);
-      setError("Failed to load data");
-    } finally {
-      setLoadingData(false);
-    }
-  };
+    const oppResponse = await getAllOpportunities();
+    setOpportunities(oppResponse.data.opportunities || []);
+
+    // 🔥 NEW
+    const matchResponse = await getMatches();
+    setMatches(matchResponse.data.matches || []);
+
+  } catch (err) {
+    console.error("Failed to fetch data:", err);
+    setError("Failed to load data");
+  } finally {
+    setLoadingData(false);
+  }
+};
 
   useEffect(() => {
-    if (!loading && user) fetchData();
-  }, [loading, user]);
-
-  // 🔥 Rest of your code remains EXACTLY SAME
+  if (!user) return;
+  fetchData();
+}, [user]);
 
   if (loading || loadingData) return (
     <div style={{
       display:"flex", alignItems:"center", justifyContent:"center",
       minHeight:"100vh", fontFamily:font,
       background: darkMode ? "#222" : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      //background: darkMode ? "#1a2e1a" : "#f5f5f5",
     }}>
       <p style={{ color:"rgba(255,255,255,.4)", fontSize:14 }}>Loading…</p>
     </div>
@@ -147,16 +150,15 @@ const VolunteerDashboard = () => {
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:6 }}>
             <div style={{
               width:44, height:44, borderRadius:12, flexShrink:0,
-              //background:"rgba(255,255,255,.08)",
-              background: darkMode ? "rgba(255,255,255,.08)" : "#fff",
-
+              background: darkMode ? "rgba(255,255,255,.15)" : "#fff",
               border:"1px solid rgba(255,255,255,.12)",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>
-              <User size={20} color={darkMode ? "#1a2e1a" : "#1a2e1a"} />
+              {/* ✅ FIX: icon visible in both modes */}
+              <User size={20} color={darkMode ? "#e8f5e9" : "#1a2e1a"} />
             </div>
             <div>
-              <h1 style={{ fontFamily:serif, fontSize:26, fontWeight:800, color: darkMode ? "#fff" : "#fff", margin:0, letterSpacing:"-.3px" }}>
+              <h1 style={{ fontFamily:serif, fontSize:26, fontWeight:800, color:"#fff", margin:0, letterSpacing:"-.3px" }}>
                 Volunteer Dashboard
               </h1>
               <p style={{ fontSize:13.5, color: darkMode ? "#aaa" : "rgba(255,255,255,.45)", margin:0 }}>
@@ -233,6 +235,95 @@ const VolunteerDashboard = () => {
           }}>
             View All Opportunities <ArrowRight size={14} />
           </button>
+        </div>
+
+        {/* 🔥 Recommended Opportunities */}
+        <div className="vol-card" style={{
+          borderRadius:18,
+          background: darkMode ? "#333" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode
+            ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)"
+            : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          padding:"26px 30px",
+          marginBottom:18,
+          color: darkMode ? "#eee" : T.textDark, // ✅ FIX: outer card text color
+        }}>
+
+          <h2 style={{
+            fontFamily:serif,
+            fontSize:16,
+            fontWeight:700,
+            marginBottom:16,
+            color: darkMode ? "#eee" : T.textDark, // ✅ FIX: heading visible in dark
+          }}>
+             Recommended For You
+          </h2>
+
+          {matches.length === 0 ? (
+            <p style={{ opacity: 0.6 }}>No matches found.</p>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              {matches.map((item, i) => {
+                const opp = item.opportunity;
+                return (
+                  <div key={opp._id} style={{
+                    padding:"16px",
+                    borderRadius:"12px",
+                    border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+                    background: darkMode ? "#444" : "#fdfaf6",
+                  }}>
+
+                    {/* ✅ FIX: all text inside card uses darkMode-aware colors */}
+                    <h3 style={{ margin:"0 0 5px", color: darkMode ? "#fff" : T.bDark }}>
+                      {opp.title}
+                    </h3>
+
+                    <p style={{ fontSize:"13px", margin:0, color: darkMode ? "#ccc" : T.textMid, opacity: darkMode ? 1 : 0.8 }}>
+                      {opp.description}
+                    </p>
+
+                    <div style={{ marginTop:"8px", fontWeight:"600", color:"#4ade80" }}>
+                       {item.matchScore}% Match
+                    </div>
+
+                    <div style={{ fontSize:"12px", marginTop:"4px", color: darkMode ? "#ccc" : T.textSoft }}>
+                      Skills: {item.matchingSkills.join(", ") || "—"}
+                    </div>
+
+                    <div style={{ display:"flex", gap:8, marginTop:"10px" }}>
+                      <button
+                        onClick={() => navigate(`/opportunities/${opp._id}`)}
+                        style={{
+                          flex:1, padding:"8px 14px", borderRadius:"8px",
+                          border:"none", background:"#2e7d32",
+                          color:"#fff", cursor:"pointer", fontWeight:600, fontSize:13,
+                        }}
+                      >
+                        View & Apply
+                      </button>
+                      <button
+                        onClick={() => navigate("/messages", {
+                          state: {
+                            preSelectUserId: opp.createdBy?._id || opp.ngo?._id,
+                            preSelectUserName: opp.ngo?.name || "NGO",
+                          }
+                        })}
+                        style={{
+                          flex:1, padding:"8px 14px", borderRadius:"8px",
+                          border:"none", background:"#b91c1c",
+                          color:"#fff", cursor:"pointer", fontWeight:600, fontSize:13,
+                        }}
+                      >
+                        💬 Message
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* My Applications */}

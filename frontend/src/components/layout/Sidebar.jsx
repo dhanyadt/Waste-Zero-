@@ -258,6 +258,8 @@ const Sidebar = () => {
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  if (!user) return null; 
+
   const isActive = (path) => location.pathname === path;
 
   const mainNav = [
@@ -289,13 +291,14 @@ const Sidebar = () => {
       : []),
   ];
 
-  const initials =
-    user?.name
-      ?.split(" ")
+  const initials = user?.name
+  ? user.name
+      .split(" ")
       .map((w) => w[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2) || "U";
+      .slice(0, 2)
+  : "";
 
   return (
     <div style={S.sidebar}>
@@ -330,16 +333,15 @@ const Sidebar = () => {
             </button>
           </div>
           <div>
-            <p style={S.userName}>{user?.name || "User"}</p>
+            <p style={S.userName}>
+  {user ? user.name : ""}
+</p>
             <p style={S.userRole}>
-              {user?.role
-                ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                : "role"}
+              {user ? (
+  user.role.charAt(0).toUpperCase() + user.role.slice(1)
+) : ""}
             </p>
-            <span style={S.statusDot(user?.isAvailable)}>
-              <span style={S.dot(user?.isAvailable)} />
-              {user?.isAvailable ? "Available" : "Unavailable"}
-            </span>
+          
           </div>
         </div>
       </div>

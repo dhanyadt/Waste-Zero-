@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth, AuthProvider } from "./context/AuthContext";
-import Sidebar from "./components/layout/Sidebar";
+import { AuthProvider } from "./context/AuthContext";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -23,12 +22,13 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* ── Public ───────────────────────────────────────── */}
+
+          {/* PUBLIC */}
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ── Auto-redirect based on role ───────────────────── */}
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
             element={
@@ -38,7 +38,7 @@ function App() {
             }
           />
 
-          {/* ── NGO routes ───────────────────────────────────── */}
+          {/* NGO */}
           <Route
             path="/ngo-dashboard"
             element={
@@ -48,7 +48,6 @@ function App() {
             }
           />
 
-          {/* Protected Create Opportunity (NGO Only) */}
           <Route
             path="/create-opportunity"
             element={
@@ -57,6 +56,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+  path="/opportunities/:id"
+  element={
+    <ProtectedRoute>
+      <Opportunities />
+    </ProtectedRoute>
+  }
+/>
+
           <Route
             path="/edit-opportunity/:id"
             element={
@@ -66,7 +75,7 @@ function App() {
             }
           />
 
-          {/* ── Volunteer routes ─────────────────────────────── */}
+          {/* VOLUNTEER */}
           <Route
             path="/volunteer-dashboard"
             element={
@@ -76,7 +85,7 @@ function App() {
             }
           />
 
-          {/* ── Shared protected routes ──────────────────────── */}
+          {/* SHARED */}
           <Route
             path="/profile"
             element={
@@ -85,6 +94,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/opportunities"
             element={
@@ -93,14 +103,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <ChatPage />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/matches"
             element={
@@ -109,7 +112,9 @@ function App() {
               </ProtectedRoute>
             }
           />
- <Route
+
+          {/* 🔥 IMPORTANT FIX */}
+          <Route
   path="/messages"
   element={
     <ProtectedRoute>
@@ -118,13 +123,20 @@ function App() {
   }
 />
 
-
+<Route
+  path="/messages/:receiverId"
+  element={
+    <ProtectedRoute>
+      <ChatPage />
+    </ProtectedRoute>
+  }
+/>
 
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/select-role" element={<SelectRole />} />
 
-          {/* ── Catch all ────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" />} />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>

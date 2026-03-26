@@ -34,20 +34,7 @@ exports.getMatches = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
-    // 🔥 SOCKET EMIT (NEW MATCH EVENT)
-    const io = req.app.get("io");
-
-    io.emit("newMatch", {
-      userId: req.user._id,
-      count: matched.length,
-    });
-
-    // 🔔 NOTIFICATION
-    io.emit("notification", {
-      type: "match",
-      to: req.user._id,
-      message: `You have ${matched.length} new matches`,
-    });
+    // ❌ REMOVE SOCKET EMITS FROM GET API
 
     res.status(200).json({
       success: true,
@@ -82,7 +69,7 @@ exports.getMatchedVolunteers = async (req, res) => {
     if (opportunity.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to view matches for this opportunity",
+        message: "Not authorized",
       });
     }
 
@@ -106,20 +93,7 @@ exports.getMatchedVolunteers = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
-    // 🔥 SOCKET EMIT (NGO side match)
-    const io = req.app.get("io");
-
-    io.emit("newMatch", {
-      opportunityId,
-      count: matched.length,
-    });
-
-    // 🔔 NOTIFICATION
-    io.emit("notification", {
-      type: "match",
-      to: req.user._id,
-      message: `Found ${matched.length} matching volunteers`,
-    });
+    // ❌ REMOVE SOCKET EMITS FROM GET API
 
     res.status(200).json({
       success: true,

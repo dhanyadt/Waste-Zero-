@@ -1,35 +1,28 @@
-  const express = require("express");
-  const cors = require("cors");
-  require("dotenv").config();
-  const passport = require("passport");
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const passport = require("passport");
 
-  const connectDB = require("./config/db");
-  const errorHandler = require("./middleware/errorHandler");
+const connectDB = require("./config/db");
+const errorHandler = require("./middleware/errorHandler");
 
-  const helmet = require("helmet");
-  const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const http = require("http");
+const { Server } = require("socket.io");
 
-  // ✅ NEW: required for socket
-  const http = require("http");
-  const { Server } = require("socket.io");
+require("./config/passport");
 
-  require("./config/passport");
+const matchRoutes = require("./routes/matchRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 
-  const matchRoutes = require("./routes/matchRoutes");
-  const messageRoutes = require("./routes/messageRoutes");
+const app = express();
 
-  const app = express();
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
-  // 🔥 DEBUG: check if env is loading
-  console.log("MONGO_URI:", process.env.MONGO_URI);
+const server = http.createServer(app);
 
-  // ✅ CREATE HTTP SERVER
-  const server = http.createServer(app);
+connectDB();
 
-  // ✅ CONNECT DATABASE (MOVE UP)
-  connectDB();
-
-  // ✅ INITIALIZE SOCKET.IO
 const io = require("socket.io")(server, {
   cors: {
     origin: "http://localhost:5173",
@@ -38,83 +31,54 @@ const io = require("socket.io")(server, {
   }
 });
 
-  // ✅ STORE CONNECTED USERS
-  const users = {};
+const users = {};
 
-  // ✅ SOCKET CONNECTION
-  io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
-    setTimeout(() => {
-      socket.emit("new_message", {
-        sender_id: "Server",
-        content: "Hello Asha 🔥 Real-time working!",
-      });
-    }, 2000);
+  socket.on("register", (userId) => {
+    users[userId] = socket.id;
+    socket.join(userId); // ✅ THIS is what makes io.to(receiver_id) work
+    console.log("User registered:", userId);
+  });
 
-    socket.on("register", (userId) => {
-      users[userId] = socket.id;
-      console.log("User registered:", userId);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
-
-      for (let userId in users) {
-        if (users[userId] === socket.id) {
-          delete users[userId];
-        }
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+    for (let userId in users) {
+      if (users[userId] === socket.id) {
+        delete users[userId];
       }
-    });
+    }
   });
+});
 
-  // ✅ MAKE io AVAILABLE IN ROUTES
-  app.set("io", io);
-  app.set("users", users);
+app.set("io", io);
+app.set("users", users);
 
-  // Security headers
-  app.use(helmet());
-
-  // Rate limiting
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests, please try again later.",
-  });
-  app.use(limiter);
-
-  // CORS
-
+app.use(helmet());
 
 app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
 }));
 
-  // Body parser
-  app.use(express.json());
+app.use(express.json());
+app.use(passport.initialize());
 
-  // Passport
-  app.use(passport.initialize());
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/opportunities", require("./routes/opportunityRoutes"));
+app.use("/api/matches", matchRoutes);
+app.use("/api/messages", messageRoutes);
 
-  // Routes
-  app.use("/api/auth", require("./routes/authRoutes"));
-  app.use("/api/users", require("./routes/userRoutes"));
-  app.use("/api/opportunities", require("./routes/opportunityRoutes"));
-  app.use("/api/matches", matchRoutes);
-  app.use("/api/messages", messageRoutes);
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
 
-  // Root route
-  app.get("/", (req, res) => {
-    res.send("Backend is running 🚀");
-  });
+app.use(errorHandler);
 
-  // Error handler
-  app.use(errorHandler);
+const PORT = process.env.PORT || 5000;
 
-  // Start server
-  const PORT = process.env.PORT || 5000;
-
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

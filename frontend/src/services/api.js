@@ -56,3 +56,10 @@ export const sendMessage = (payload) =>
 
 export const getMessages = (userId) =>
   API.get(`/messages/${userId}`);
+
+export const getMatches = () => 
+  API.get("/matches");
+
+export const getConversations = ()=>
+   API.get("/messages");
+

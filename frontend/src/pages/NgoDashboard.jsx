@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { getAllOpportunitiesForNgo, deleteOpportunity } from "../services/api";
-import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2, MessageSquare, Users } from "lucide-react";
 import { getOpportunityApplicants } from "../services/api";
+import API from "../services/api";
 
 const T = {
   gDeep:"#1b5e20", gDark:"#2e7d32", gMid:"#43a047", gLight:"#81c784",
@@ -30,6 +31,13 @@ const css = `
   .btn-delete { transition: all .15s !important; }
   .btn-delete:hover { background:#fee2e2 !important; border-color:#f87171 !important; transform:translateY(-1px); }
   .modal-wrap { animation: scaleIn .18s ease both; }
+  .convo-row { transition: background .15s, transform .15s; cursor: pointer; }
+  .convo-row:hover { background: rgba(46,125,50,.08) !important; transform: translateX(3px); }
+  .btn-msg-volunteer { transition: all .18s !important; }
+  .btn-msg-volunteer:hover { opacity:.88 !important; transform:translateY(-1px) !important; box-shadow:0 6px 18px rgba(46,125,50,.4) !important; }
+  .btn-msg-volunteer:active { transform:translateY(0) !important; }
+  .vol-row { transition: background .15s, transform .15s; }
+  .vol-row:hover { background: rgba(46,125,50,.06) !important; transform: translateX(2px); }
 `;
 
 const StatusBadge = ({ status, darkMode }) => {
@@ -101,47 +109,75 @@ const NgoDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
-  const [applicants, setApplicants] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [oppToDelete, setOppToDelete] = useState(null);
-
-  // ← ADDED: dark mode state
   const [darkMode, setDarkMode] = useState(false);
+  const [matches, setMatches] = useState({});
+  const [conversations, setConversations] = useState([]);
+  const [convoLoading, setConvoLoading] = useState(true);
+
   const toggleTheme = () => setDarkMode(!darkMode);
 
-  const fetchOpportunities = async () => {
-  try {
-    const response = await getAllOpportunitiesForNgo();
-    const opps = response.data.opportunities || [];
+  // ✅ Aggregate top volunteers across all opportunities, deduplicated by volunteer _id
+  const topVolunteers = Object.values(matches)
+    .flat()
+    .reduce((acc, m) => {
+      const id = String(m.volunteer._id);
+      if (!acc.find((v) => String(v.volunteer._id) === id)) acc.push(m);
+      return acc;
+    }, [])
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 5);
 
-    setOpportunities(opps);
-
-    const data = {};
-
-    for (let opp of opps) {
-      try {
-        const res = await getOpportunityApplicants(opp._id);
-        data[opp._id] = res.data.applicants || [];
-      } catch (err) {
-        data[opp._id] = [];
-      }
+  const fetchMatchesForOpp = async (oppId) => {
+    try {
+      const res = await API.get(`/matches/${oppId}`);
+      return res.data.matches || [];
+    } catch (err) {
+      console.error("Match fetch error:", err);
+      return [];
     }
+  };
 
-    setApplicants(data);
+  const fetchOpportunities = async () => {
+    try {
+      const response = await getAllOpportunitiesForNgo();
+      const opps = response.data.opportunities || [];
+      setOpportunities(opps);
+      const matchData = {};
+      for (let opp of opps) {
+        const matched = await fetchMatchesForOpp(opp._id);
+        matchData[opp._id] = matched.sort((a, b) => b.matchScore - a.matchScore);
+      }
+      setMatches(matchData);
+    } catch (err) {
+      console.error("Failed to fetch opportunities:", err);
+      setError("Failed to load opportunities");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  } catch (err) {
-    console.error("Failed to fetch opportunities:", err);
-    setError("Failed to load opportunities");
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchConversations = async () => {
+    try {
+      setConvoLoading(true);
+      const res = await API.get("/messages");
+      setConversations(res.data?.conversations || []);
+    } catch (err) {
+      setConversations([]);
+    } finally {
+      setConvoLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!authLoading && user) fetchOpportunities();
+    if (!authLoading && user) {
+      fetchOpportunities();
+      fetchConversations();
+    }
   }, [authLoading, user]);
 
   const handleDeleteClick = (opp) => { setOppToDelete(opp); setShowDeleteModal(true); };
@@ -172,10 +208,10 @@ const NgoDashboard = () => {
   );
 
   const stats = [
-    { label:"Total",       value:opportunities.length,                                              accent:T.bMid   },
-    { label:"Open",        value:opportunities.filter(o=>o.status==="open").length,                 accent:T.gDark  },
-    { label:"In Progress", value:opportunities.filter(o=>o.status==="in-progress").length,          accent:"#eab308"},
-    { label:"Closed",      value:opportunities.filter(o=>o.status==="closed").length,               accent:"#ef4444"},
+    { label:"Total",       value:opportunities.length,                                     accent:T.bMid   },
+    { label:"Open",        value:opportunities.filter(o=>o.status==="open").length,         accent:T.gDark  },
+    { label:"In Progress", value:opportunities.filter(o=>o.status==="in-progress").length,  accent:"#eab308"},
+    { label:"Closed",      value:opportunities.filter(o=>o.status==="closed").length,       accent:"#ef4444"},
   ];
 
   const orgInfo = [
@@ -188,7 +224,7 @@ const NgoDashboard = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      background: darkMode 
+      background: darkMode
         ? "#1a2e1a"
         : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
       color: darkMode ? "#eee" : "#000"
@@ -197,7 +233,6 @@ const NgoDashboard = () => {
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
 
-        {/* ← TOGGLE BUTTON */}
         <button onClick={toggleTheme} style={{
           position:"absolute", top:20, right:20,
           padding:"8px 14px", borderRadius:12, border:"none",
@@ -213,8 +248,7 @@ const NgoDashboard = () => {
           <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:6 }}>
             <div style={{
               width:44, height:44, borderRadius:12, flexShrink:0,
-              background: darkMode ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.08)",
-              border:"1px solid rgba(255,255,255,.12)",
+              background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.12)",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>
               <Building2 size={20} color="rgba(255,255,255,.7)" />
@@ -235,9 +269,8 @@ const NgoDashboard = () => {
           {stats.map(({ label, value, accent }, i) => (
             <div key={label} className="ngo-card" style={{
               borderRadius:16, background: darkMode ? "#1e1e1e" : "#fff",
-              borderTop:`3px solid ${accent}`,
-              padding:"20px 22px",
-              boxShadow: darkMode 
+              borderTop:`3px solid ${accent}`, padding:"20px 22px",
+              boxShadow: darkMode
                 ? "0 2px 8px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4)"
                 : "0 2px 8px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.18)",
               animationDelay:`${i*0.06}s`,
@@ -253,10 +286,9 @@ const NgoDashboard = () => {
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
-          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4)" : "0 2px 8px rgba(0,0,0,.22)",
           padding:"26px 30px", marginBottom:18,
-          position:"relative", overflow:"hidden",
-          animationDelay:"0.1s",
+          position:"relative", overflow:"hidden", animationDelay:"0.1s",
           color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
@@ -273,15 +305,184 @@ const NgoDashboard = () => {
           </div>
         </div>
 
+        {/* ✅ RECOMMENDED VOLUNTEERS CARD */}
+        <div className="ngo-card" style={{
+          borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4)" : "0 2px 8px rgba(0,0,0,.22)",
+          padding:"26px 30px", marginBottom:18,
+          position:"relative", overflow:"hidden", animationDelay:"0.12s",
+          color: darkMode ? "#eee" : T.textDark,
+        }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.gDark}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16, paddingBottom:12, borderBottom:`1px solid ${darkMode ? "#555" : T.bPale}` }}>
+            <Users size={16} color={T.gDark} />
+            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:0 }}>Recommended Volunteers</h2>
+            {topVolunteers.length > 0 && (
+              <span style={{ marginLeft:"auto", fontSize:12, color: darkMode ? "#aaa" : T.textSoft }}>
+                {topVolunteers.length} top match{topVolunteers.length !== 1 ? "es" : ""}
+              </span>
+            )}
+          </div>
+
+          {loading ? (
+            <p style={{ fontSize:13, opacity:0.5 }}>Loading matches…</p>
+          ) : topVolunteers.length === 0 ? (
+            <p style={{ fontSize:13, opacity:0.5 }}>No volunteer matches yet. Create opportunities to find matches.</p>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {topVolunteers.map((m) => (
+                <div key={m.volunteer._id} className="vol-row" style={{
+                  display:"flex", alignItems:"center", gap:14,
+                  padding:"12px 14px", borderRadius:12,
+                  border:`1px solid ${darkMode ? "#444" : T.bSand}`,
+                  background: darkMode ? "#2a2a2a" : T.bPale,
+                }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width:40, height:40, borderRadius:10, flexShrink:0,
+                    background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontFamily:serif, fontSize:16, fontWeight:800, color:"#fff",
+                  }}>
+                    {m.volunteer.name?.charAt(0).toUpperCase() || "V"}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color: darkMode ? "#fff" : T.bDark }}>
+                      {m.volunteer.name}
+                    </div>
+                    <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap", alignItems:"center" }}>
+                      {m.volunteer.location && (
+                        <span style={{ fontSize:11.5, color: darkMode ? "#aaa" : T.textSoft, display:"flex", alignItems:"center", gap:3 }}>
+                          <MapPin size={10} /> {m.volunteer.location}
+                        </span>
+                      )}
+                      {m.volunteer.skills?.slice(0, 3).map((s, idx) => (
+                        <span key={idx} style={{
+                          padding:"2px 8px", borderRadius:20,
+                          background: darkMode ? "#333" : T.gPale,
+                          color: darkMode ? "#ccc" : T.gDark,
+                          fontSize:11, fontWeight:500,
+                          border:`1px solid ${darkMode ? "#555" : T.gSage}`,
+                        }}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Match score + Message */}
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+                    <span style={{
+                      fontSize:12, fontWeight:700, color:"#15803d",
+                      background:"#dcfce7", padding:"3px 9px", borderRadius:20,
+                      border:"1px solid #bbf7d0",
+                    }}>
+                      {m.matchScore}% match
+                    </span>
+                    <button
+                      className="btn-msg-volunteer"
+                      onClick={() => navigate("/messages", {
+                        state: {
+                          preSelectUserId: m.volunteer._id,
+                          preSelectUserName: m.volunteer.name,
+                        }
+                      })}
+                      style={{
+                        padding:"6px 13px",
+                        background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+                        color:"#fff", border:"none", borderRadius:8,
+                        fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font,
+                        boxShadow:`0 3px 10px rgba(46,125,50,.3)`,
+                      }}
+                    >
+                      Message
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* CONVERSATIONS PANEL */}
+        <div className="ngo-card" style={{
+          borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
+          border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4)" : "0 2px 8px rgba(0,0,0,.22)",
+          padding:"26px 30px", marginBottom:18,
+          position:"relative", overflow:"hidden", animationDelay:"0.13s",
+          color: darkMode ? "#eee" : T.textDark,
+        }}>
+          <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16, paddingBottom:12, borderBottom:`1px solid ${darkMode ? "#555" : T.bPale}` }}>
+            <MessageSquare size={16} color={T.gDark} />
+            <h2 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:0 }}>Messages</h2>
+            {conversations.length > 0 && (
+              <span style={{ marginLeft:"auto", fontSize:12, color: darkMode ? "#aaa" : T.textSoft }}>
+                {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
+          {convoLoading ? (
+            <p style={{ fontSize:13, opacity:0.5 }}>Loading conversations…</p>
+          ) : conversations.length === 0 ? (
+            <p style={{ fontSize:13, opacity:0.5 }}>No messages yet. Volunteers can message you from the Opportunities page.</p>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              {conversations.map((convo) => (
+                <div
+                  key={convo.user._id}
+                  className="convo-row"
+                  onClick={() => navigate("/messages", {
+                    state: {
+                      preSelectUserId: convo.user._id,
+                      preSelectUserName: convo.user.name,
+                    }
+                  })}
+                  style={{
+                    display:"flex", alignItems:"center", gap:14,
+                    padding:"12px 14px", borderRadius:12,
+                    border:`1px solid ${darkMode ? "#444" : T.bSand}`,
+                    background: darkMode ? "#2a2a2a" : T.bPale,
+                  }}
+                >
+                  <div style={{
+                    width:38, height:38, borderRadius:10, flexShrink:0,
+                    background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                    <MessageSquare size={16} color="#fff" />
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, fontWeight:600, color: darkMode ? "#fff" : T.bDark }}>
+                      {convo.user.name || "Volunteer"}
+                    </div>
+                    <div style={{
+                      fontSize:12, color: darkMode ? "#aaa" : T.textSoft,
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
+                    }}>
+                      {convo.lastMessage || "No messages yet"}
+                    </div>
+                  </div>
+                  <div style={{ fontSize:11, color: darkMode ? "#888" : T.textSoft, flexShrink:0 }}>
+                    {convo.createdAt ? new Date(convo.createdAt).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }) : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Create CTA */}
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
-          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4)" : "0 2px 8px rgba(0,0,0,.22)",
           padding:"22px 30px", marginBottom:18,
           display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16,
-          position:"relative", overflow:"hidden",
-          animationDelay:"0.15s",
+          position:"relative", overflow:"hidden", animationDelay:"0.15s",
           color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.gDark}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
@@ -290,8 +491,7 @@ const NgoDashboard = () => {
             <p style={{ fontSize:13, color: darkMode ? "#ccc" : T.textSoft, margin:0 }}>Create recycling drives, collection events, and volunteer opportunities.</p>
           </div>
           <button className="btn-primary" onClick={() => navigate("/create-opportunity")} style={{
-            display:"inline-flex", alignItems:"center", gap:7,
-            padding:"11px 20px",
+            display:"inline-flex", alignItems:"center", gap:7, padding:"11px 20px",
             background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
             color:"#fff", border:"none", borderRadius:10,
             fontSize:13.5, fontWeight:600, fontFamily:font, cursor:"pointer",
@@ -305,10 +505,9 @@ const NgoDashboard = () => {
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
-          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25)" : "0 2px 8px rgba(0,0,0,.22), 0 8px 24px rgba(0,0,0,.18)",
+          boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,.4)" : "0 2px 8px rgba(0,0,0,.22)",
           padding:"26px 30px", marginBottom:20,
-          position:"relative", overflow:"hidden",
-          animationDelay:"0.2s",
+          position:"relative", overflow:"hidden", animationDelay:"0.2s",
           color: darkMode ? "#eee" : T.textDark,
         }}>
           <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${T.bMid}, ${T.gMid})`, borderRadius:"18px 18px 0 0" }} />
@@ -336,7 +535,8 @@ const NgoDashboard = () => {
               {opportunities.map((opp, i) => (
                 <div key={opp._id} className="ngo-opp-row" style={{
                   padding:"16px 18px", borderRadius:12,
-                  border:`1px solid ${darkMode ? "#555" : T.bSand}`, background: darkMode ? "#2a2a2a" : "#fdfaf6",
+                  border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+                  background: darkMode ? "#2a2a2a" : "#fdfaf6",
                   animationDelay:`${0.2 + i*0.04}s`,
                   color: darkMode ? "#eee" : T.textDark,
                 }}>
@@ -345,8 +545,7 @@ const NgoDashboard = () => {
                       <h3 style={{ margin:"0 0 3px", fontSize:15, fontWeight:700, color: darkMode ? "#fff" : T.bDark }}>{opp.title}</h3>
                       <p style={{
                         margin:0, fontSize:13, color: darkMode ? "#ccc" : T.textMid, lineHeight:1.5,
-                        display:"-webkit-box", WebkitLineClamp:2,
-                        WebkitBoxOrient:"vertical", overflow:"hidden",
+                        display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden",
                       }}>{opp.description}</p>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0 }}>
@@ -376,44 +575,7 @@ const NgoDashboard = () => {
                     </div>
                   </div>
 
-                  
-                   
-{/* Required Skills */}
-{opp.requiredSkills?.length > 0 && (
-  <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
-    {opp.requiredSkills.map((skill, idx) => (
-      <span
-        key={idx}
-        style={{
-          padding:"3px 9px",
-          borderRadius:20,
-          background:T.gPale,
-          color:T.gDark,
-          fontSize:11.5,
-          fontWeight:500,
-          border:`1px solid ${T.gSage}`,
-        }}
-      >
-        {skill}
-      </span>
-    ))}
-  </div>
-)}
-
-{/* Applicants Skill Match */}
-{applicants[opp._id]?.length > 0 && (
-  <div style={{ marginTop:8 }}>
-    {applicants[opp._id].slice(0,3).map((app, i) => (
-      <div key={i} style={{ fontSize:12.5 }}>
-        {app.name} —
-        <span style={{ color:"#16a34a", fontWeight:600 }}>
-          {" "}{app.matchPercent}% match
-        </span>
-      </div>
-    ))}
-  </div>
-)}
-
+                  {/* ✅ Skills tags — untouched */}
                   {opp.requiredSkills?.length > 0 && (
                     <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
                       {opp.requiredSkills.map((skill, idx) => (
