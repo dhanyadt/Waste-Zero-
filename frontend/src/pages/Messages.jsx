@@ -128,8 +128,8 @@ const Messages = () => {
       const currentUserId = currentUser?._id || currentUser?.id;
 
       const msgs = (res.data.messages || [])
-        .reverse()
-        .map((msg) => {
+  .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+  .map((msg) => {
           // ✅ FIX: safely extract senderId — handles object, string, or undefined
           const senderId =
             msg.sender_id?._id ??

@@ -16,11 +16,10 @@ const formatTime = (ts) => {
 };
 
 const getTimestamp = (message) => {
-  return new Date(
-    message.createdAt ||
-    message.timestamp ||
-    0
-  ).getTime();
+  const raw = message.createdAt || message.timestamp;
+  if (!raw) return 0;
+  const t = new Date(raw).getTime();
+  return isNaN(t) ? 0 : t;
 };
 
 const normalizeMessage = (msg) => ({
@@ -28,8 +27,11 @@ const normalizeMessage = (msg) => ({
   sender_id: msg.sender_id || msg.senderId,
   receiver_id: msg.receiver_id || msg.receiverId,
   content: msg.content,
-  createdAt: msg.createdAt || msg.timestamp,
+  createdAt: msg.createdAt || msg.timestamp || new Date().toISOString(),
 });
+
+const sortByTime = (arr) =>
+  [...arr].sort((a, b) => getTimestamp(a) - getTimestamp(b));
 
 const ChatPage = () => {
   const { receiverId: urlReceiverId } = useParams();
@@ -56,7 +58,7 @@ const ChatPage = () => {
     return () => setMessagesPageActive(false);
   }, []);
 
-  // ✅ Fetch matches
+  // Fetch matches
   useEffect(() => {
     if (!user) return;
 
@@ -65,22 +67,18 @@ const ChatPage = () => {
         if (user.role === "volunteer") {
           const res = await getMatches();
           const usersMap = {};
-
           res.data.matches?.forEach((m) => {
             const ngo = m.opportunity?.createdBy;
             if (ngo && ngo._id) usersMap[ngo._id] = ngo;
           });
-
           setMatchedUsers(Object.values(usersMap));
         } else {
           const res = await getPotentialMatchesForNgo();
           const usersMap = {};
-
           res.data.matches?.forEach((m) => {
             const vol = m.volunteer;
             if (vol && vol._id) usersMap[vol._id] = vol;
           });
-
           setMatchedUsers(Object.values(usersMap));
         }
       } catch (err) {
@@ -91,7 +89,7 @@ const ChatPage = () => {
     fetchMatchedUsers();
   }, [user]);
 
-  // ✅ Select user from URL
+  // Select user from URL
   useEffect(() => {
     if (receiverId && matchedUsers.length > 0) {
       const match = matchedUsers.find((u) => u._id === receiverId);
@@ -99,7 +97,7 @@ const ChatPage = () => {
     }
   }, [receiverId, matchedUsers]);
 
-  // ✅ Load messages
+  // Load messages — sort after normalize so createdAt is always a string
   useEffect(() => {
     if (!receiverId) return;
 
@@ -107,10 +105,8 @@ const ChatPage = () => {
       try {
         const res = await getMessages(receiverId);
         const fetched = res.data?.messages || res.data || [];
-
-        fetched.sort((a, b) => getTimestamp(a) - getTimestamp(b));
-
-        setMessages(fetched.map(normalizeMessage));
+        const normalized = fetched.map(normalizeMessage);
+        setMessages(sortByTime(normalized));
       } catch (err) {
         console.warn(err);
       }
@@ -119,49 +115,41 @@ const ChatPage = () => {
     loadMessages();
   }, [receiverId]);
 
-  // ✅ Socket handling
-  
-useEffect(() => {
-  if (!socket || !user) return;
+  // Socket handling
+  useEffect(() => {
+    if (!socket || !user) return;
 
-  const handleIncomingMessage = (msg) => {
-    console.log("🔥 REALTIME:", msg);
+    const handleIncomingMessage = (msg) => {
+      const normalized = normalizeMessage(msg);
 
-    const normalized = {
-      _id: msg._id,
-      sender_id: msg.sender_id || msg.senderId,
-      receiver_id: msg.receiver_id || msg.receiverId,
-      content: msg.content,
-      createdAt:
-        msg?.createdAt ??
-        msg?.timestamp ??
-        new Date().toISOString(),
+      setMessages((prev) => {
+        // Remove matching temp message (optimistic)
+        const filtered = prev.filter(
+          (m) =>
+            !(
+              String(m._id).startsWith("temp-") &&
+              m.content === normalized.content &&
+              String(m.sender_id) === String(normalized.sender_id)
+            )
+        );
+
+        // Avoid duplicates
+        const exists = filtered.find((m) => m._id === normalized._id);
+        if (exists) return filtered;
+
+        return sortByTime([...filtered, normalized]);
+      });
     };
 
-    setMessages((prev) => {
-      const exists = prev.find((m) => m._id === normalized._id);
-      if (exists) return prev;
+    socket.off("newMessage");
+    socket.on("newMessage", handleIncomingMessage);
 
-      const updated = [...prev, normalized];
+    return () => {
+      socket.off("newMessage", handleIncomingMessage);
+    };
+  }, [socket, user]);
 
-      updated.sort(
-        (a, b) => getTimestamp(a) - getTimestamp(b)
-      );
-
-      return updated;
-    });
-  };
-
-  // ✅ CORRECT PLACE
-  socket.off("newMessage");
-  socket.on("newMessage", handleIncomingMessage);
-
-  return () => {
-    socket.off("newMessage", handleIncomingMessage);
-  };
-}, [socket, user]);
-
-  // ✅ Auto scroll
+  // Auto scroll to bottom whenever messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -170,38 +158,30 @@ useEffect(() => {
     setDraft(e.target.value);
   };
 
-const handleSend = async (e) => {
-  e.preventDefault();
-  if (!draft.trim()) return;
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!draft.trim()) return;
 
-  const senderId = user.id || user._id;
+    const senderId = user.id || user._id;
+    const contentToSend = draft;
 
-  const tempMsg = {
-    _id: Date.now(), // temporary id
-    sender_id: senderId,
-    receiver_id: receiverId,
-    content: draft,
-    createdAt: new Date().toISOString(),
+    const tempMsg = {
+      _id: `temp-${Date.now()}`,
+      sender_id: senderId,
+      receiver_id: receiverId,
+      content: contentToSend,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => sortByTime([...prev, tempMsg]));
+    setDraft("");
+
+    try {
+      await sendMessage({ receiver_id: receiverId, content: contentToSend });
+    } catch (err) {
+      console.warn(err);
+    }
   };
-
-  setMessages((prev) => [...prev, tempMsg]);
-
-  try {
-    await sendMessage({
-  receiver_id: receiverId,
-  content: draft,
-});
-  } catch (err) {
-    console.warn(err);
-  }
-
-  setDraft("");
-};
-
-  // ✅ SORT (IMPORTANT FIX)
-  const sortedMessages = [...messages].sort(
-    (a, b) => getTimestamp(a) - getTimestamp(b)
-  );
 
   return (
     <div className="flex h-full text-white">
@@ -236,15 +216,13 @@ const handleSend = async (e) => {
 
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto p-4">
-          {sortedMessages.map((msg, i) => {
+          {messages.map((msg, i) => {
             const isMe =
-  String(msg.sender_id) === String(user.id || user._id);
+              String(msg.sender_id) === String(user.id || user._id);
             return (
               <div
                 key={msg._id || i}
-                className={`mb-3 flex ${
-                  isMe ? "justify-end" : "justify-start"
-                }`}
+                className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`px-4 py-2 rounded-xl ${
