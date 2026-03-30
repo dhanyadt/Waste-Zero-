@@ -23,7 +23,6 @@ const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
 const S = {
-  /* ── rich green+brown page bg, white cards ── */
   page: {
     minHeight: "100vh",
     fontFamily: font,
@@ -78,7 +77,6 @@ const S = {
     transition: "all .2s",
   }),
 
-  /* white cards with green-to-brown top accent */
   card: {
     background: "#ffffff",
     borderRadius: "18px",
@@ -258,6 +256,8 @@ const Profile = () => {
   const [passwordMessage, setPasswordMessage] = useState({ text: "", type: "" });
   const [showPasswords, setShowPasswords] = useState({ currentPassword: false, newPassword: false, confirmPassword: false });
 
+  const [darkMode, setDarkMode] = useState(false);
+
   const toggleShow = (field) => setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
 
   useEffect(() => {
@@ -327,11 +327,43 @@ const Profile = () => {
     }
   };
 
+  // Dark mode card style — matches NGO exactly
+  const darkCard = {
+    background: darkMode ? "#1e1e1e" : "#ffffff",
+    border: darkMode ? "1px solid #555" : S.card.border,
+    boxShadow: darkMode
+      ? "0 2px 8px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4)"
+      : S.card.boxShadow,
+    color: darkMode ? "#eee" : T.textDark,
+  };
+
   return (
-    <div style={S.page}>
+    <div style={{
+      ...S.page,
+      ...(darkMode && { background: "#1a2e1a", backgroundImage: "none" }),
+    }}>
       <div style={S.container}>
         <h1 style={S.pageTitle}>My Profile</h1>
         <p style={S.pageSub}>Manage your account information and settings</p>
+
+        {/* Dark/Light Mode Toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          style={{
+            padding: "8px 14px",
+            borderRadius: "12px",
+            border: "none",
+            cursor: "pointer",
+            background: darkMode ? "#eee" : "#333",
+            color: darkMode ? "#333" : "#fff",
+            fontWeight: 600,
+            fontSize: "12px",
+            float: "right",
+            marginBottom: "16px",
+          }}
+        >
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
 
         {/* Tabs */}
         <div style={S.tabs}>
@@ -341,66 +373,66 @@ const Profile = () => {
 
         {/* ── PROFILE TAB ── */}
         {activeTab === "profile" && (
-          <div style={S.card}>
+          <div style={{ ...S.card, ...darkCard }}>
             <div style={S.cardAccent} />
 
-            <div style={S.cardHeader}>
-              <h2 style={S.cardTitle}>Personal Information</h2>
-              <p style={S.cardSub}>Update your personal information and profile details</p>
+            <div style={{ ...S.cardHeader, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>
+              <h2 style={{ ...S.cardTitle, color: darkMode ? "#fff" : T.bDark }}>Personal Information</h2>
+              <p style={{ ...S.cardSub, color: darkMode ? "#aaa" : T.textSoft }}>Update your personal information and profile details</p>
             </div>
 
             {/* Full Name */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Full Name</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Full Name</label>
               {editing
                 ? <input name="name" value={formData.name} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.input} />
-                : <p style={S.readValue}>{user?.name || "—"}</p>}
+                : <p style={{ ...S.readValue, color: darkMode ? "#eee" : T.textDark, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>{user?.name || "—"}</p>}
             </div>
 
             {/* Email (read-only) */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Email</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Email</label>
               <input value={user?.email || ""} readOnly style={S.inputReadOnly} />
-              <p style={S.hint}>This is the email address used for account notifications.</p>
+              <p style={{ ...S.hint, color: darkMode ? "#aaa" : T.textSoft }}>This is the email address used for account notifications.</p>
             </div>
 
             {/* Role */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Role</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Role</label>
               <div><span style={S.badge}>{user?.role}</span></div>
             </div>
 
             {/* Location */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Location</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Location</label>
               {editing ? (
                 <>
                   <input name="location" value={formData.location} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.input} placeholder="City, Country" />
-                  <p style={S.hint}>This helps match you with nearby opportunities.</p>
+                  <p style={{ ...S.hint, color: darkMode ? "#aaa" : T.textSoft }}>This helps match you with nearby opportunities.</p>
                 </>
               ) : (
-                <p style={S.readValue}>{user?.location || "—"}</p>
+                <p style={{ ...S.readValue, color: darkMode ? "#eee" : T.textDark, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>{user?.location || "—"}</p>
               )}
             </div>
 
             {/* Skills */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Skills</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Skills</label>
               {editing
                 ? <input name="skills" value={formData.skills} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.input} placeholder="e.g. React, teamwork, etc." />
-                : <p style={S.readValue}>{user?.skills?.join(", ") || "—"}</p>}
+                : <p style={{ ...S.readValue, color: darkMode ? "#eee" : T.textDark, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>{user?.skills?.join(", ") || "—"}</p>}
             </div>
 
             {/* Bio */}
             <div style={S.fieldRow}>
-              <label style={S.label}>Bio</label>
+              <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>Bio</label>
               {editing
                 ? <textarea name="bio" value={formData.bio} onChange={handleChange} onFocus={focusOn} onBlur={focusOff} style={S.textarea} placeholder="Tell us a bit about yourself…" />
-                : <p style={S.readValue}>{user?.bio || "—"}</p>}
+                : <p style={{ ...S.readValue, color: darkMode ? "#eee" : T.textDark, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>{user?.bio || "—"}</p>}
             </div>
 
             {/* Buttons */}
-            <div style={S.btnRow}>
+            <div style={{ ...S.btnRow, borderTop: `1px solid ${darkMode ? "#555" : T.bPale}` }}>
               {editing ? (
                 <>
                   <button style={S.btnPrimary} onClick={handleSave} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Save Changes</button>
@@ -415,12 +447,12 @@ const Profile = () => {
 
         {/* ── PASSWORD TAB ── */}
         {activeTab === "password" && (
-          <div style={S.card}>
+          <div style={{ ...S.card, ...darkCard }}>
             <div style={S.cardAccent} />
 
-            <div style={S.cardHeader}>
-              <h2 style={S.cardTitle}>Change Password</h2>
-              <p style={S.cardSub}>Update your password to secure your account</p>
+            <div style={{ ...S.cardHeader, borderBottom: `1px solid ${darkMode ? "#555" : T.bPale}` }}>
+              <h2 style={{ ...S.cardTitle, color: darkMode ? "#fff" : T.bDark }}>Change Password</h2>
+              <p style={{ ...S.cardSub, color: darkMode ? "#aaa" : T.textSoft }}>Update your password to secure your account</p>
             </div>
 
             {passwordMessage.text && (
@@ -435,7 +467,7 @@ const Profile = () => {
               { name: "confirmPassword", label: "Confirm New Password" },
             ].map(({ name, label, hint }) => (
               <div key={name} style={S.fieldRow}>
-                <label style={S.label}>{label}</label>
+                <label style={{ ...S.label, color: darkMode ? "#ccc" : T.bMid }}>{label}</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showPasswords[name] ? "text" : "password"}
@@ -468,11 +500,11 @@ const Profile = () => {
                     {showPasswords[name] ? "👁️" : "🔒"}
                   </button>
                 </div>
-                {hint && <p style={S.hint}>{hint}</p>}
+                {hint && <p style={{ ...S.hint, color: darkMode ? "#aaa" : T.textSoft }}>{hint}</p>}
               </div>
             ))}
 
-            <div style={S.btnRow}>
+            <div style={{ ...S.btnRow, borderTop: `1px solid ${darkMode ? "#555" : T.bPale}` }}>
               <button style={S.btnPrimary} onClick={handleChangePassword} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
                 Change Password
               </button>

@@ -33,7 +33,8 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    if (!["volunteer", "ngo"].includes(normalizedRole)) {
+    // ✅ INCLUDE ADMIN ROLE
+    if (!["volunteer", "ngo", "admin"].includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
         message: "Invalid role",
@@ -60,7 +61,8 @@ exports.registerUser = async (req, res) => {
       role: normalizedRole,
     });
 
-    const token = generateToken(user._id);
+    // ✅ INCLUDE ROLE IN TOKEN
+    const token = generateToken(user._id, user.role);
 
     res.status(201).json({
       success: true,
@@ -77,7 +79,6 @@ exports.registerUser = async (req, res) => {
         bio: user.bio,
       },
     });
-
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({
@@ -86,7 +87,6 @@ exports.registerUser = async (req, res) => {
     });
   }
 };
-
 
 // ================= LOGIN =================
 exports.loginUser = async (req, res) => {
@@ -100,8 +100,7 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-
+    const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
@@ -111,7 +110,26 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    let isMatch = false;
+
+    if (
+      typeof user.password === "string" &&
+      (user.password.startsWith("$2a$") ||
+        user.password.startsWith("$2b$") ||
+        user.password.startsWith("$2y$"))
+    ) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      if (password === user.password) {
+        isMatch = true;
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+      }
+    }
 
     if (!isMatch) {
       return res.status(400).json({
@@ -120,7 +138,7 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       success: true,
@@ -137,7 +155,6 @@ exports.loginUser = async (req, res) => {
         bio: user.bio,
       },
     });
-
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({
@@ -147,15 +164,23 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-
 // ================= GET PROFILE =================
 exports.getUserProfile = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    user: req.user,
-  });
-};
+  try {
+    const user = await User.findById(req.user._id).select("-password");
 
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Get Profile Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
 
 // ================= UPDATE PROFILE =================
 exports.updateUserProfile = async (req, res) => {
@@ -179,18 +204,8 @@ exports.updateUserProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        username: updatedUser.username,
-        role: updatedUser.role,
-        skills: updatedUser.skills,
-        location: updatedUser.location,
-        bio: updatedUser.bio,
-      },
+      user: updatedUser,
     });
-
   } catch (error) {
     console.error("Update Profile Error:", error);
     res.status(500).json({
@@ -200,7 +215,6 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
-
 // ================= CHANGE PASSWORD =================
 exports.changePassword = async (req, res) => {
   try {
@@ -209,22 +223,7 @@ exports.changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Current password and new password are required",
-      });
-    }
-
-    if (!validator.isStrongPassword(newPassword)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol",
-      });
-    }
-
-    if (currentPassword === newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "New password cannot be same as current password",
+        message: "All fields are required",
       });
     }
 
@@ -240,16 +239,14 @@ exports.changePassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash(newPassword, salt);
 
-    user.password = hashedPassword;
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
     });
-
   } catch (error) {
     console.error("Change Password Error:", error);
     res.status(500).json({

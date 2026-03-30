@@ -28,17 +28,36 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
 
-    skills: { type: [String], default: [] },
-    location: { type: String, default: "" },
-    bio: { type: String, default: "" },
+    skills: {
+      type: [String],
+      default: [],
+    },
 
-    googleId: { type: String, unique: true, sparse: true },
+    location: {
+      type: String,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      default: "",
+    },
+
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
     profilePic: { type: String },
   },
   { timestamps: true }
 );
 
-// Indexes
+/* ================================
+   🔥 INDEXES (MILESTONE 4)
+================================ */
+
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
 

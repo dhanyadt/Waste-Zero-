@@ -5,7 +5,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     let token;
 
-    // Get token from header
+    // Extract token
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -13,17 +13,18 @@ const authMiddleware = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
+    // No token
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized, token missing",
+        message: "Unauthorized: No token provided",
       });
     }
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from DB
+    // Get user from DB (IMPORTANT for security + roles)
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -33,11 +34,13 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    // Attach full user object
     req.user = user;
 
     next();
   } catch (error) {
     console.error("Auth Middleware Error:", error.message);
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

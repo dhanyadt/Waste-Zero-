@@ -10,26 +10,81 @@ const {
   getOpportunityById,
   updateOpportunity,
   deleteOpportunity,
+  getMyOpportunities,
+  getMyApplications,
+  applyToOpportunity,
+  getOpportunityApplicants,
 } = require("../controllers/opportunityController");
 
-// CREATE (NGO only)
-router.post(
-  "/",
+/* ===============================
+   CREATE OPPORTUNITY (NGO only)
+================================ */
+router.post("/", authMiddleware, roleMiddleware("ngo"), createOpportunity);
+
+/* ===============================
+   NGO: VIEW THEIR OPPORTUNITIES
+================================ */
+router.get(
+  "/my-opportunities",
   authMiddleware,
   roleMiddleware("ngo"),
-  createOpportunity
+  getMyOpportunities
 );
 
-// GET ALL
-router.get("/", getAllOpportunities);
+/* ===============================
+   VOLUNTEER: VIEW APPLICATIONS
+================================ */
+router.get(
+  "/my-applications",
+  authMiddleware,
+  roleMiddleware("volunteer"),
+  getMyApplications
+);
 
-// GET SINGLE
+/* ===============================
+   VOLUNTEER APPLY
+================================ */
+router.post(
+  "/:id/apply",
+  authMiddleware,
+  roleMiddleware("volunteer"),
+  applyToOpportunity
+);
+
+/* ===============================
+   NGO: VIEW APPLICANTS
+================================ */
+router.get(
+  "/:id/applicants",
+  authMiddleware,
+  roleMiddleware("ngo"),
+  getOpportunityApplicants
+);
+
+/* ===============================
+   PUBLIC ROUTES
+================================ */
+router.get("/", getAllOpportunities);
 router.get("/:id", getOpportunityById);
 
-// UPDATE (owner only)
-router.put("/:id", authMiddleware, updateOpportunity);
+/* ===============================
+   UPDATE (NGO only)
+================================ */
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("ngo"),
+  updateOpportunity
+);
 
-// DELETE (owner only)
-router.delete("/:id", authMiddleware, deleteOpportunity);
+/* ===============================
+   DELETE (NGO only)
+================================ */
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("ngo"),
+  deleteOpportunity
+);
 
 module.exports = router;

@@ -13,22 +13,26 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     if (!formData.email || !formData.password) {
       setError("Please fill all fields");
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     setError("");
 
     try {
+      console.log("Sending login request:", formData);
+
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
@@ -42,29 +46,33 @@ const Login = () => {
 
       const data = await response.json();
 
+      console.log("Login response:", data);
+
       if (!response.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || "Invalid email or password");
         setIsLoading(false);
         return;
       }
 
-      // Clear old session
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      // Clear old session completely
+      localStorage.clear();
 
       // Save new session
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Update React state
+      // Update React context
       updateUser(data.user);
 
-      // Redirect based on role
+      console.log("Login successful:", data.user);
+
+      // Redirect by role
       if (data.user.role === "ngo") {
         navigate("/ngo-dashboard");
       } else {
         navigate("/volunteer-dashboard");
       }
+
     } catch (err) {
       console.error("Login error:", err);
       setError("Login failed. Please try again.");
@@ -80,12 +88,16 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-card">
+
+        {/* LEFT PANEL */}
         <div className="lc-left">
           <div className="lc-left-glow" />
+
           <div className="lc-brand">
             <div className="lc-logo-wrap">
               <img src="/images/Logo.png" alt="WasteZero Logo" />
             </div>
+
             <h3>WasteZero Initiative</h3>
             <p>Together we care for the future of the next generations</p>
           </div>
@@ -96,13 +108,17 @@ const Login = () => {
           </div>
         </div>
 
+        {/* RIGHT PANEL */}
         <div className="lc-right">
+
           <h2>Login</h2>
           <p>Enter your details to log in.</p>
 
           {error && <div className="lc-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
+
+            {/* EMAIL */}
             <div className="lc-field">
               <input
                 type="email"
@@ -115,6 +131,7 @@ const Login = () => {
               />
             </div>
 
+            {/* PASSWORD */}
             <div className="lc-field">
               <input
                 type={showPassword ? "text" : "password"}
@@ -136,12 +153,21 @@ const Login = () => {
               </button>
             </div>
 
-            <button type="submit" className="lc-submit" disabled={isLoading}>
+            {/* LOGIN BUTTON */}
+            <button
+              type="submit"
+              className="lc-submit"
+              disabled={isLoading}
+            >
               {isLoading ? "Logging in…" : "Continue"}
             </button>
+
           </form>
 
+          {/* DIVIDER */}
           <div className="lc-divider">OR</div>
+
+          {/* GOOGLE LOGIN */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -162,15 +188,6 @@ const Login = () => {
               gap: "10px",
               boxSizing: "border-box",
               boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
-              transition: "box-shadow 0.2s, background 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.boxShadow = "0 3px 10px rgba(0,0,0,0.15)";
-              e.target.style.background = "#f7f7f7";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.boxShadow = "0 1px 4px rgba(0,0,0,0.1)";
-              e.target.style.background = "#ffffff";
             }}
           >
             <img
@@ -180,6 +197,8 @@ const Login = () => {
             />
             Continue with Google
           </button>
+
+          {/* REGISTER LINK */}
           <p className="lc-register-link">
             Don't have an account?{" "}
             <Link to="/register" className="lc-link">
@@ -187,21 +206,14 @@ const Login = () => {
             </Link>
           </p>
 
+          {/* TERMS */}
           <p className="lc-terms">
             By continuing, you agree to the updated{" "}
-            <a href="/terms" className="lc-link">
-              Terms of Sale
-            </a>
-            ,{" "}
-            <a href="/terms" className="lc-link">
-              Terms of Service
-            </a>
-            , and{" "}
-            <a href="/privacy" className="lc-link">
-              Privacy Policy
-            </a>
-            .
+            <a href="/terms" className="lc-link">Terms of Sale</a>,{" "}
+            <a href="/terms" className="lc-link">Terms of Service</a>, and{" "}
+            <a href="/privacy" className="lc-link">Privacy Policy</a>.
           </p>
+
         </div>
       </div>
     </div>
