@@ -3,13 +3,10 @@ const router = express.Router();
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const { getUserProfile, updateUserProfile } = require("../controllers/authController");
 
-router.get("/me", authMiddleware, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user,
-  });
-});
+router.get("/me", authMiddleware, getUserProfile);
+router.put("/me", authMiddleware, updateUserProfile);
 
 // NGO only route
 router.get(

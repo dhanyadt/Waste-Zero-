@@ -11,7 +11,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 // Volunteer matches
 router.get("/", authMiddleware, getMatches);
 
-// NGO matches
+// NGO specific opportunity matches
 router.get("/:opportunityId", authMiddleware, getMatchedVolunteers);
 
 module.exports = router;

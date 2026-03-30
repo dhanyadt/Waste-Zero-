@@ -1,14 +1,7 @@
+
 const express = require('express');
 const router = express.Router();
-const {
-  getAdminOverview,
-  getAdminUsers,
-  toggleUserStatus,
-  getAdminOpportunities,
-  deleteAdminOpportunity,
-  getAdminReports,
-  getAdminLogs
-} = require('../controllers/adminController');
+const adminController = require("../controllers/adminController");
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 
@@ -38,4 +31,5 @@ router.get('/reports', getAdminReports);
 router.get('/logs', getAdminLogs);
 
 module.exports = router;
+
 

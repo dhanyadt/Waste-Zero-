@@ -132,7 +132,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => (
 );
 
 const NgoVolunteerMatches = () => {
-  const { user } = useAuth();
+  const { user, setMatchesPageActive } = useAuth();
   const navigate = useNavigate();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,10 +175,12 @@ const NgoVolunteerMatches = () => {
   };
 
   useEffect(() => {
+    setMatchesPageActive(true);
     if (user && user.role === "ngo") {
       fetchMatches();
     }
-  }, [user]);
+    return () => setMatchesPageActive(false);
+  }, [user, setMatchesPageActive]);
 
   const handleApprove = async (oppId, volId) => {
     const key = `${oppId}-${volId}`;
@@ -340,29 +342,46 @@ const NgoVolunteerMatches = () => {
                       <div style={{ marginBottom: 12, fontSize: 13, color: "rgba(255,255,255,.6)" }}>
                         Best opportunity: <strong style={{ color: "#fff" }}>{match.bestOppTitle}</strong>
                       </div>
-                      <button 
-                        className="btn-primary"
-                        disabled={approving[`${match.bestOpp}-${match.volunteer._id}`]}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(match.bestOpp, match.volunteer._id);
-                        }}
-                        style={{
-                          padding: "12px 24px", borderRadius: 12,
-                          background: `linear-gradient(135deg, ${T.gDark}, ${T.gMid})`,
-                          color: "#fff", border: "none", fontWeight: 600, fontSize: 14,
-                          boxShadow: "0 6px 20px rgba(46,125,50,.4)",
-                          cursor: approving[`${match.bestOpp}-${match.volunteer._id}`] ? "default" : "pointer",
-                          opacity: approving[`${match.bestOpp}-${match.volunteer._id}`] ? 0.8 : 1,
-                        }}
-                      >
-                        {approving[`${match.bestOpp}-${match.volunteer._id}`] ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin mr-2" />
-                            Approving...
-                          </>
-                        ) : "Approve Volunteer"}
-                      </button>
+                      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                        <button 
+                          className="btn-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/messages/${match.volunteer._id}`);
+                          }}
+                          style={{
+                            padding: "12px 20px", borderRadius: 12,
+                            background: "rgba(255,255,255,.1)",
+                            color: "#fff", border: "1px solid rgba(255,255,255,.2)", 
+                            fontWeight: 600, fontSize: 14, cursor: "pointer",
+                          }}
+                        >
+                          Message
+                        </button>
+                        <button 
+                          className="btn-primary"
+                          disabled={approving[`${match.bestOpp}-${match.volunteer._id}`]}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApprove(match.bestOpp, match.volunteer._id);
+                          }}
+                          style={{
+                            padding: "12px 24px", borderRadius: 12,
+                            background: `linear-gradient(135deg, ${T.gDark}, ${T.gMid})`,
+                            color: "#fff", border: "none", fontWeight: 600, fontSize: 14,
+                            boxShadow: "0 6px 20px rgba(46,125,50,.4)",
+                            cursor: approving[`${match.bestOpp}-${match.volunteer._id}`] ? "default" : "pointer",
+                            opacity: approving[`${match.bestOpp}-${match.volunteer._id}`] ? 0.8 : 1,
+                          }}
+                        >
+                          {approving[`${match.bestOpp}-${match.volunteer._id}`] ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin mr-2" />
+                              Approving...
+                            </>
+                          ) : "Approve Volunteer"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

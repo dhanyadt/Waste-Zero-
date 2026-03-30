@@ -1,285 +1,290 @@
-const User = require('../models/User');
-const Opportunity = require('../models/Opportunity');
+const mongoose = require("mongoose");
+const User = require("../models/User");
+const Opportunity = require("../models/Opportunity");
+const AuditLog = require("../models/AuditLog");
 
-// @desc    Get admin overview stats
-// @route   GET /api/admin/overview
-// @access  Private/Admin
-const getAdminOverview = async (req, res, next) => {
+// Helper to check valid ObjectId
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+// ── GET /api/admin/overview ───────────────────────────────────
+// main's version — richer (role breakdown, AuditLog activity)
+exports.getDashboardOverview = async (req, res) => {
   try {
-    const [
-      totalUsers,
-      totalNgos,
-      totalVolunteers,
-      totalOpportunities,
-      activeNgos,
-      activeVolunteers
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: 'ngo' }),
-      User.countDocuments({ role: 'volunteer' }),
-      Opportunity.countDocuments(),
-      User.countDocuments({ role: 'ngo', status: 'active' }),
-      User.countDocuments({ role: 'volunteer', status: 'active' })
+    const totalUsers = await User.countDocuments();
+
+    const roles = await User.aggregate([
+      { $group: { _id: { $toUpper: "$role" }, count: { $sum: 1 } } },
     ]);
 
-    const stats = {
-      totalUsers,
-      ngos: totalNgos,
-      volunteers: totalVolunteers,
-      totalOpportunities,
-      activeNgos,
-      activeVolunteers,
-      recentActivity: [] // TODO: implement from logs model if exists
-    };
-
-    res.status(200).json({
-      success: true,
-      data: stats
+    let usersByRole = { VOLUNTEER: 0, NGO: 0, ADMIN: 0 };
+    roles.forEach((r) => {
+      if (r._id === "VOLUNTEER") usersByRole.VOLUNTEER += r.count;
+      else if (r._id === "NGO") usersByRole.NGO += r.count;
+      else if (r._id === "ADMIN") usersByRole.ADMIN += r.count;
     });
-  } catch (error) {
-    next(error);
-  }
-};
 
-// @desc    Get all users (admin view)
-// @route   GET /api/admin/users
-// @access  Private/Admin
-const getAdminUsers = async (req, res, next) => {
-  try {
-    const users = await User.find({})
-      .select('name role status location email createdAt profilePic')
+    // stats: activeNgos, activeVolunteers
+    const [activeNgos, activeVolunteers] = await Promise.all([
+      User.countDocuments({ role: "ngo", status: "active" }),
+      User.countDocuments({ role: "volunteer", status: "active" }),
+    ]);
+
+    const totalOpportunities = await Opportunity.countDocuments();
+
+    const recentActivities = await AuditLog.find()
+      .populate("adminId", "name email")
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(10);
+
     res.status(200).json({
       success: true,
-      users
+      data: {
+        totalUsers,
+        usersByRole,
+        activeNgos,
+        activeVolunteers,
+        totalOpportunities,
+        recentActivities,
+      },
     });
   } catch (error) {
-    next(error);
+    console.error("Dashboard overview error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// @desc    Toggle user status (active/suspended)
-// @route   PATCH /api/admin/users/:id/status
-// @access  Private/Admin
-const toggleUserStatus = async (req, res, next) => {
+// ── GET /api/admin/users ──────────────────────────────────────
+// main's version — pagination + role/status filter
+exports.getAllUsers = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
+    const { role, status, page = 1, limit = 10 } = req.query;
 
-    user.status = user.status === 'active' ? 'suspended' : 'active';
+    let query = {};
+    if (role) query.role = { $in: [role.toLowerCase(), role.toUpperCase()] };
+    if (status) query.status = status.toUpperCase();
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const users = await User.find(query)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await User.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      pagination: { total, page: parseInt(page), pages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error("Get all users error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ── PATCH /api/admin/users/:id/status ────────────────────────
+// main's version — validation + AuditLog + self-suspend protection
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!isValidId(id))
+      return res.status(400).json({ success: false, message: "Invalid User ID" });
+
+    if (!status || !["ACTIVE", "SUSPENDED"].includes(status.toUpperCase()))
+      return res.status(400).json({ success: false, message: "Invalid status value" });
+
+    if (id === req.user._id.toString())
+      return res.status(400).json({ success: false, message: "Admin cannot suspend themselves" });
+
+    const user = await User.findById(id);
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    user.status = status.toUpperCase();
     await user.save();
 
+    await AuditLog.create({
+      adminId: req.user._id,
+      action: status.toUpperCase() === "SUSPENDED" ? "USER_SUSPENDED" : "USER_ACTIVATED",
+      targetType: "USER",
+      targetId: user._id,
+      details: `User status changed to ${user.status}`,
+    });
+
     res.status(200).json({
       success: true,
-      user: {
-        _id: user._id,
-        name: user.name,
-        status: user.status
-      }
+      message: `User status updated to ${user.status}`,
+      data: { _id: user._id, name: user.name, email: user.email, status: user.status },
     });
   } catch (error) {
-    next(error);
+    console.error("Update user status error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// @desc    Get admin opportunities with filters
-// @route   GET /api/admin/opportunities
-// @access  Private/Admin
-const getAdminOpportunities = async (req, res, next) => {
+// ── GET /api/admin/opportunities ──────────────────────────────
+// merged 
+exports.getAllOpportunities = async (req, res) => {
   try {
-    const { status, ngo, location } = req.query;
-    const filter = {};
+    const { status, createdBy, location, ngo, page = 1, limit = 10 } = req.query;
 
-    if (status && ['open', 'closed'].includes(status.toLowerCase())) {
-      filter.status = status.toLowerCase();
+    let query = {};
+    if (status) query.status = status.toLowerCase();
+    if (location) query.location = { $regex: location, $options: "i" };
+    if (ngo) query["ngo.name"] = { $regex: ngo, $options: "i" };
+    if (createdBy) {
+      if (!isValidId(createdBy))
+        return res.status(400).json({ success: false, message: "Invalid createdBy ID" });
+      query.createdBy = createdBy;
     }
 
-    if (location) {
-      filter.location = { $regex: location, $options: 'i' };
-    }
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    if (ngo) {
-      filter['ngo.name'] = { $regex: ngo, $options: 'i' }; // Assumes populated, but use aggregation or populate after
-    }
+    const opportunities = await Opportunity.find(query)
+      .populate("ngo", "name email")
+      .populate("createdBy", "name email role")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    const opportunities = await Opportunity.find(filter)
-      .populate('ngo', 'name email')
-      .populate('createdBy', 'name email role')
-      .sort({ createdAt: -1 });
+    const total = await Opportunity.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      opportunities
+      data: opportunities,
+      pagination: { total, page: parseInt(page), pages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    next(error);
+    console.error("Get all opportunities error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// @desc    Get reports/chart data with date range
-// @route   GET /api/admin/reports
-// @access  Private/Admin
-const getAdminReports = async (req, res, next) => {
+// ── DELETE /api/admin/opportunities/:id ───────────────────────
+// main's version — validation + AuditLog
+exports.deleteOpportunity = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidId(id))
+      return res.status(400).json({ success: false, message: "Invalid Opportunity ID" });
+
+    const opportunity = await Opportunity.findById(id);
+    if (!opportunity)
+      return res.status(404).json({ success: false, message: "Opportunity not found" });
+
+    await Opportunity.findByIdAndDelete(id);
+
+    await AuditLog.create({
+      adminId: req.user._id,
+      action: "OPPORTUNITY_DELETED",
+      targetType: "OPPORTUNITY",
+      targetId: opportunity._id,
+      details: `Deleted opportunity: ${opportunity.title}`,
+    });
+
+    res.status(200).json({ success: true, message: "Opportunity deleted successfully" });
+  } catch (error) {
+    console.error("Delete opportunity error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ── GET /api/admin/reports ────────────────────────────────────
+
+exports.getAdminReports = async (req, res) => {
   try {
     const { date_from, date_to } = req.query;
     const match = {};
     if (date_from) match.$gte = new Date(date_from);
-    if (date_to) match.$lte = new Date(date_to + 'T23:59:59.999Z');
+    if (date_to) match.$lte = new Date(date_to + "T23:59:59.999Z");
 
-    // User growth: monthly new users
     const userGrowth = await User.aggregate([
-      { $match },
+      { $match: match },
       {
         $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          count: { $sum: 1 }
-        }
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
       {
         $project: {
-          month: { $concat: [ 
-            { $toString: '$_id.month' },
-            '-',
-            { $toString: '$_id.year' }
-          ] },
-          count: 1,
-          _id: 0
-        }
-      }
+          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
+          count: 1, _id: 0,
+        },
+      },
     ]);
 
-    // Opportunity trends: monthly opps
     const oppGrowth = await Opportunity.aggregate([
       { $match: { createdAt: match } },
       {
         $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          count: { $sum: 1 }
-        }
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
       {
         $project: {
-          month: { $concat: [ 
-            { $toString: '$_id.month' },
-            '-',
-            { $toString: '$_id.year' }
-          ] },
-          count: 1,
-          _id: 0
-        }
-      }
+          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
+          count: 1, _id: 0,
+        },
+      },
     ]);
 
-    // Participation: monthly applicants
     const participation = await Opportunity.aggregate([
       { $match: { createdAt: match } },
-      { $unwind: '$applicants' },
+      { $unwind: "$applicants" },
       {
         $group: {
-          _id: {
-            year: { $year: '$applicants.appliedAt' },
-            month: { $month: '$applicants.appliedAt' }
-          },
-          count: { $sum: 1 }
-        }
+          _id: { year: { $year: "$applicants.appliedAt" }, month: { $month: "$applicants.appliedAt" } },
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
       {
         $project: {
-          month: { $concat: [ 
-            { $toString: '$_id.month' },
-            '-',
-            { $toString: '$_id.year' }
-          ] },
-          count: 1,
-          _id: 0
-        }
-      }
+          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
+          count: 1, _id: 0,
+        },
+      },
     ]);
 
-    res.status(200).json({
-      success: true,
-      userGrowth,
-      oppGrowth,
-      participation
-    });
+    res.status(200).json({ success: true, userGrowth, oppGrowth, participation });
   } catch (error) {
-    next(error);
+    console.error("Admin reports error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// @desc    Get admin activity logs with pagination
-// @route   GET /api/admin/logs
-// @access  Private/Admin
-const getAdminLogs = async (req, res, next) => {
+// ── GET /api/admin/logs ───────────────────────────────────────
+// manisha's intent + main's AuditLog model (replaces hardcoded sample data)
+exports.getAdminLogs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    // Sample admin actions data (TODO: implement Log model + middleware logging)
-    const sampleLogs = [
-      { _id: 1, action: 'user_suspended', admin: 'Admin Smith', target: {type: 'user', id: 'user123', name: 'John Volunteer'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2) },
-      { _id: 2, action: 'opportunity_deleted', admin: 'Admin Smith', target: {type: 'opportunity', id: 'opp456', title: 'Beach Cleanup'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5) },
-      { _id: 3, action: 'user_activated', admin: 'Admin Johnson', target: {type: 'user', id: 'user789', name: 'Jane NGO'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10) },
-      { _id: 4, action: 'opportunity_deleted', admin: 'Admin Johnson', target: {type: 'opportunity', id: 'opp101', title: 'Park Clean-up'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 15) },
-      { _id: 5, action: 'user_suspended', admin: 'Admin Smith', target: {type: 'user', id: 'user222', name: 'Bob Volunteer'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 20) },
-      { _id: 6, action: 'opportunity_deleted', admin: 'Admin Lee', target: {type: 'opportunity', id: 'opp333', title: 'River Cleanup'}, timestamp: new Date(Date.now() - 1000 * 60 * 60 * 25) }
-    ].reverse(); // Recent first
+    const logs = await AuditLog.find()
+      .populate("adminId", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    const logs = sampleLogs.slice(skip, skip + limit);
-    const total = sampleLogs.length;
+    const total = await AuditLog.countDocuments();
 
     res.status(200).json({
       success: true,
       logs,
-      pagination: {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total
-      }
+      pagination: { current: page, pages: Math.ceil(total / limit), total },
     });
   } catch (error) {
-    next(error);
+    console.error("Admin logs error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-// @desc    Delete opportunity (admin moderation)
-// @route   DELETE /api/admin/opportunities/:id
-// @access  Private/Admin
-const deleteAdminOpportunity = async (req, res, next) => {
-  try {
-    const opportunity = await Opportunity.findByIdAndDelete(req.params.id);
-    if (!opportunity) {
-      return res.status(404).json({ success: false, message: 'Opportunity not found' });
-    }
-    res.status(200).json({
-      success: true,
-      message: 'Opportunity deleted successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = {
-  getAdminOverview,
-  getAdminUsers,
-  toggleUserStatus,
-  getAdminOpportunities,
-  deleteAdminOpportunity,
-  getAdminReports,
-  getAdminLogs
-};
-
