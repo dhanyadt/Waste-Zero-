@@ -1,14 +1,30 @@
-# Apply Form Modal Implementation
-✅ Plan approved by user
+# Opportunity Moderation Implementation Plan
 
 ## Steps:
-1. ✅ Add ApplyModal component and state to frontend/src/pages/Opportunities.jsx (modal UI, state, button updated to openModal)
-2. [ ] Update handleApply to open modal instead of direct API
-3. [ ] Add form submission logic with validation and API call
-4. [ ] Update frontend/src/services/api.js with submitApplication if needed (extend existing)
-5. [ ] Update backend/models/Opportunity.js to add name, location, skills to applicants subdoc
-6. [ ] Update backend/controllers/opportunityController.js apply handler to save form data
-7. [ ] Test end-to-end: volunteer login → opportunities → apply → form → submit → pending status
-8. [ ] Update TODO.md with completion
+1. ✅ [Complete] Create TODO.md with plan breakdown
+2. ✅ Update backend/controllers/adminController.js: Add filters to getAdminOpportunities (status, ngo, location) and add deleteAdminOpportunity function
+3. ✅ Update backend/routes/adminRoutes.js: Add DELETE /opportunities/:id route
+4. ✅ Update frontend/src/pages/AdminOpportunities.jsx: Add filter UI (Status dropdown, NGO input, Location input), improve details display, Tailwind styling
+5. [Pending] Test backend APIs (Postman or curl)
+6. [Pending] Test frontend: Login as admin, filter/list/delete opportunities
+7. [Pending] Mark complete and attempt_completion
 
-Current: Backend complete (step 5-6 ✅). Ready for testing (step 7).
+## Reports & Analytics Plan
+
+1. ✅ Previous task complete
+2. ✅ Update backend/controllers/adminController.js: Enhance getAdminReports with aggregations for user growth, opp trends, participation + date range
+**Reports & Analytics ✅ Complete!**
+
+Run `cd backend && npm start` and `cd frontend && npm run dev` to test Admin > Reports page: charts, date filters, CSV download work with real aggregated data.
+
+### Admin Activity Logs Plan
+
+**Admin Activity Logs ✅ Complete! (Sample data; TODO: real Log model)**
+
+Test: Admin > Logs - paginated table with actions, search/filter ready for real data.
+3. [Pending] Test
+
+**Current: Starting logs implementation**
+
+
+
