@@ -12,61 +12,24 @@ const {
   deleteOpportunity,
 } = require("../controllers/opportunityController");
 
-
-// CREATE OPPORTUNITY (NGO only)
-  getMyOpportunities,
-  getMyApplications,
-  applyToOpportunity
-} = require("../controllers/opportunityController");
-
-const authMiddleware = require("../middleware/authMiddleware");
-const roleMiddleware = require("../middleware/roleMiddleware");
-
-
-// Create opportunity
-router.post("/", authMiddleware, roleMiddleware("ngo"), createOpportunity);
-
-
-// IMPORTANT: custom routes BEFORE :id
-router.get("/my-opportunities", authMiddleware, getMyOpportunities);
-router.get("/my-applications", authMiddleware, getMyApplications);
-
-
-// Apply to opportunity
+// CREATE (NGO only)
 router.post(
-  "/:id/apply",
+  "/",
   authMiddleware,
-  roleMiddleware("volunteer"),
-  applyToOpportunity
+  roleMiddleware("ngo"),
+  createOpportunity
 );
 
-
-// GET ALL OPPORTUNITIES
+// GET ALL
 router.get("/", getAllOpportunities);
 
-
-// GET SINGLE OPPORTUNITY
+// GET SINGLE
 router.get("/:id", getOpportunityById);
 
-
-// UPDATE OPPORTUNITY
+// UPDATE (owner only)
 router.put("/:id", authMiddleware, updateOpportunity);
 
-
-// DELETE OPPORTUNITY
+// DELETE (owner only)
 router.delete("/:id", authMiddleware, deleteOpportunity);
-// Public routes
-router.get("/", getAllOpportunities);
-router.get("/:id", getOpportunityById);
-
-
-// Update opportunity
-router.put("/:id", authMiddleware, roleMiddleware("ngo"), updateOpportunity);
-
-
-// Delete opportunity
-router.delete("/:id", authMiddleware, roleMiddleware("ngo"), deleteOpportunity);
-
-
 
 module.exports = router;

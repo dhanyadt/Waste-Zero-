@@ -2,11 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    name: { type: String, required: true, trim: true },
 
     email: {
       type: String,
@@ -15,46 +11,35 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    username: {
-      type: String,
-      required: false,
-    },
 
-    password: {
-      type: String,
-      required: false,
-    },
+    username: { type: String },
+
+    password: { type: String },
 
     role: {
       type: String,
       enum: ["volunteer", "ngo", "admin"],
-      default: null,
       required: true,
     },
 
-    skills: {
-      type: [String],
-      default: [],
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
     },
 
-    location: {
-      type: String,
-      default: "",
-    },
+    skills: { type: [String], default: [] },
+    location: { type: String, default: "" },
+    bio: { type: String, default: "" },
 
-    bio: {
-      type: String,
-      default: "",
-    },
-    googleId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-
+    googleId: { type: String, unique: true, sparse: true },
     profilePic: { type: String },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
+
+// Indexes
+userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
 
 module.exports = mongoose.model("User", userSchema);

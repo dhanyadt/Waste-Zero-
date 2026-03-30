@@ -4,13 +4,10 @@ const validator = require("validator");
 const generateToken = require("../utils/generateToken");
 
 // ================= REGISTER =================
-// REGISTER USER
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, username, password, role } = req.body;
 
-    // Required fields
-    if (!name || !email || !password || !role) {
     if (!name || !email || !username || !password || !role) {
       return res.status(400).json({
         success: false,
@@ -18,19 +15,16 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    const normalizedRole = role.toLowerCase();
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedRole = role.toLowerCase();
 
-    // Email validation
     if (!validator.isEmail(normalizedEmail)) {
-    if (!validator.isEmail(email)) {
       return res.status(400).json({
         success: false,
         message: "Invalid email format",
       });
     }
 
-    // Password strength validation
     if (!validator.isStrongPassword(password)) {
       return res.status(400).json({
         success: false,
@@ -39,18 +33,14 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // Role validation
     if (!["volunteer", "ngo"].includes(normalizedRole)) {
-    if (!["volunteer", "ngo", "admin"].includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Invalid role",
       });
     }
 
-    // Check existing user
     const existingUser = await User.findOne({ email: normalizedEmail });
-    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -59,11 +49,6 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -72,10 +57,9 @@ exports.registerUser = async (req, res) => {
       email: normalizedEmail,
       username,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
     });
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -105,7 +89,6 @@ exports.registerUser = async (req, res) => {
 
 
 // ================= LOGIN =================
-// LOGIN USER
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -120,8 +103,6 @@ exports.loginUser = async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
 
     const user = await User.findOne({ email: normalizedEmail });
-
-    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
@@ -139,7 +120,6 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const token = generateToken(user);
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -157,6 +137,7 @@ exports.loginUser = async (req, res) => {
         bio: user.bio,
       },
     });
+
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({
@@ -168,7 +149,6 @@ exports.loginUser = async (req, res) => {
 
 
 // ================= GET PROFILE =================
-// GET USER PROFILE
 exports.getUserProfile = async (req, res) => {
   res.status(200).json({
     success: true,
@@ -178,7 +158,6 @@ exports.getUserProfile = async (req, res) => {
 
 
 // ================= UPDATE PROFILE =================
-// UPDATE USER PROFILE
 exports.updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -200,7 +179,6 @@ exports.updateUserProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: updatedUser,
       user: {
         id: updatedUser._id,
         name: updatedUser.name,
@@ -224,7 +202,6 @@ exports.updateUserProfile = async (req, res) => {
 
 
 // ================= CHANGE PASSWORD =================
-// CHANGE PASSWORD
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -243,15 +220,6 @@ exports.changePassword = async (req, res) => {
           "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol",
       });
     }
-
-    if (currentPassword === newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "New password cannot be same as current password",
-      });
-    }
-
-    const user = await User.findById(req.user._id);
 
     if (currentPassword === newPassword) {
       return res.status(400).json({
@@ -281,6 +249,7 @@ exports.changePassword = async (req, res) => {
       success: true,
       message: "Password updated successfully",
     });
+
   } catch (error) {
     console.error("Change Password Error:", error);
     res.status(500).json({
