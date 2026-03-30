@@ -11,6 +11,9 @@ router.use(adminMiddleware);
 // Step 5: Dashboard Overview
 router.get("/overview", adminController.getDashboardOverview);
 
+// Step 5.1: Reporting System
+router.get("/reports", adminController.getReports);
+
 // Step 6: User Management
 router.get("/users", adminController.getAllUsers);
 
