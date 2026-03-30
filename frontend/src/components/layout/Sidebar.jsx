@@ -47,7 +47,6 @@ const S = {
     boxShadow: "2px 0 20px rgba(0,0,0,.3)",
     flexShrink: 0,
   },
-  /* decorative rings */
   ring1: {
     position: "absolute",
     width: 280,
@@ -80,7 +79,6 @@ const S = {
     transform: "translateX(-50%)",
     pointerEvents: "none",
   },
-  /* logo bar */
   logoBar: {
     padding: "20px 20px 0",
     display: "flex",
@@ -110,7 +108,6 @@ const S = {
     color: "#fff",
     letterSpacing: "-.2px",
   },
-  /* profile section */
   profileSection: {
     padding: "16px 20px 12px",
     position: "relative",
@@ -156,21 +153,6 @@ const S = {
     textTransform: "capitalize",
     marginBottom: 6,
   },
-  statusDot: (avail) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 5,
-    fontSize: 11,
-    color: "rgba(255,255,255,.5)",
-  }),
-  dot: (avail) => ({
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: avail ? T.gLight : T.bSand,
-    boxShadow: avail ? "0 0 6px rgba(129,199,132,.6)" : "none",
-  }),
-  /* nav */
   navSection: { padding: "4px 12px", flex: 1, position: "relative", zIndex: 1 },
   sectionLabel: {
     fontSize: 10,
@@ -212,26 +194,11 @@ const S = {
     flexShrink: 0,
     transition: "background .2s",
   }),
-  /* bottom area */
   bottomSection: {
     padding: "12px 12px 20px",
     borderTop: "1px solid rgba(255,255,255,.06)",
     position: "relative",
     zIndex: 1,
-  },
-  darkModeRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "8px 12px",
-    marginBottom: 4,
-  },
-  darkLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,.5)",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
   },
   logoutBtn: {
     display: "flex",
@@ -258,56 +225,45 @@ const Sidebar = () => {
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (!user) return null; 
+  if (!user) return null;
 
   const isActive = (path) => location.pathname === path;
 
   const mainNav = [
-    {
-      label: "Dashboard",
-      path: "/dashboard",
-      icon: <LayoutDashboard size={14} />,
-    },
-    {
-      label: "Schedule Pickup",
-      path: "/schedule",
-      icon: <Calendar size={14} />,
-    },
-    {
-      label: "Opportunities",
-      path: "/opportunities",
-      icon: <Target size={14} />,
-    },
-    { label: "Messages", path: "/messages", icon: <MessageSquare size={14} /> },
-    { label: "My Impact", path: "/impact", icon: <TrendingUp size={14} /> },
+    { label: "Dashboard",      path: "/dashboard",     icon: <LayoutDashboard size={14} /> },
+    { label: "Schedule Pickup", path: "/schedule",     icon: <Calendar size={14} /> },
+    { label: "Opportunities",  path: "/opportunities", icon: <Target size={14} /> },
+    { label: "Messages",       path: "/messages",      icon: <MessageSquare size={14} /> },
+    { label: "My Impact",      path: "/impact",        icon: <TrendingUp size={14} /> },
   ];
 
   const settingsNav = [
-    { label: "My Profile", path: "/profile", icon: <User size={14} /> },
-    { label: "Settings", path: "/settings", icon: <Settings size={14} /> },
-    { label: "Help & Support", path: "/help", icon: <HelpCircle size={14} /> },
+    { label: "My Profile",     path: "/profile",   icon: <User size={14} /> },
+    { label: "Settings",       path: "/settings",  icon: <Settings size={14} /> },
+    { label: "Help & Support", path: "/help",      icon: <HelpCircle size={14} /> },
+    // ✅ Admin nav — from manisha-milestone4 (fuller version)
     ...(user?.role === "admin"
-      ? [{ label: "Admin Panel", path: "/admin", icon: <Shield size={14} /> }]
+      ? [
+          { label: "Admin Dashboard",       path: "/admin",                icon: <Shield size={14} /> },
+          { label: "Manage Users",          path: "/admin/users",          icon: <User size={14} /> },
+          { label: "Manage Opportunities",  path: "/admin/opportunities",  icon: <Target size={14} /> },
+          { label: "Reports",               path: "/admin/reports",        icon: <TrendingUp size={14} /> },
+          { label: "Logs",                  path: "/admin/logs",           icon: <Settings size={14} /> },
+        ]
       : []),
   ];
 
   const initials = user?.name
-  ? user.name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  : "";
+    ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+    : "";
 
   return (
     <div style={S.sidebar}>
-      {/* decorative */}
       <div style={S.ring1} />
       <div style={S.ring2} />
       <div style={S.topGlow} />
 
-      {/* Logo bar */}
+      {/* Logo */}
       <div style={S.logoBar}>
         <div style={S.logoIcon}>♻️</div>
         <span style={S.logoText}>WasteZero</span>
@@ -333,15 +289,10 @@ const Sidebar = () => {
             </button>
           </div>
           <div>
-            <p style={S.userName}>
-  {user ? user.name : ""}
-</p>
+            <p style={S.userName}>{user ? user.name : ""}</p>
             <p style={S.userRole}>
-              {user ? (
-  user.role.charAt(0).toUpperCase() + user.role.slice(1)
-) : ""}
+              {user ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
             </p>
-          
           </div>
         </div>
       </div>
@@ -355,8 +306,7 @@ const Sidebar = () => {
             style={S.navBtn(isActive(path))}
             onClick={() => navigate(path)}
             onMouseEnter={(e) => {
-              if (!isActive(path))
-                e.currentTarget.style.background = "rgba(255,255,255,.06)";
+              if (!isActive(path)) e.currentTarget.style.background = "rgba(255,255,255,.06)";
               e.currentTarget.style.color = "rgba(255,255,255,.9)";
             }}
             onMouseLeave={(e) => {
@@ -369,21 +319,12 @@ const Sidebar = () => {
             <div style={S.iconWrap(isActive(path))}>{icon}</div>
             <span style={{ flex: 1, textAlign: "left" }}>{label}</span>
             {path === "/messages" && notificationCount > 0 && (
-              <span
-                style={{
-                  minWidth: 18,
-                  height: 18,
-                  padding: "0 6px",
-                  borderRadius: 999,
-                  background: "rgba(239,68,68,.85)",
-                  color: "#fff",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <span style={{
+                minWidth: 18, height: 18, padding: "0 6px", borderRadius: 999,
+                background: "rgba(239,68,68,.85)", color: "#fff",
+                fontSize: 11, fontWeight: 700,
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+              }}>
                 {notificationCount}
               </span>
             )}
@@ -397,8 +338,7 @@ const Sidebar = () => {
             style={S.navBtn(isActive(path))}
             onClick={() => navigate(path)}
             onMouseEnter={(e) => {
-              if (!isActive(path))
-                e.currentTarget.style.background = "rgba(255,255,255,.06)";
+              if (!isActive(path)) e.currentTarget.style.background = "rgba(255,255,255,.06)";
               e.currentTarget.style.color = "rgba(255,255,255,.9)";
             }}
             onMouseLeave={(e) => {
@@ -418,10 +358,7 @@ const Sidebar = () => {
       <div style={S.bottomSection}>
         <button
           style={S.logoutBtn}
-          onClick={() => {
-            logout();
-            navigate("/");
-          }}
+          onClick={() => { logout(); navigate("/"); }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "rgba(239,68,68,.1)";
             e.currentTarget.style.color = "rgb(239,68,68)";
@@ -436,10 +373,7 @@ const Sidebar = () => {
         </button>
       </div>
 
-      <ProfileUploadModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <ProfileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

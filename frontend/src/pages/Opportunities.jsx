@@ -380,7 +380,6 @@ const Opportunities = () => {
               Find ways to make a difference in your community
             </p>
           </div>
-
           <button
             onClick={() => setDarkMode(!darkMode)}
             style={{
@@ -405,14 +404,9 @@ const Opportunities = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
-              width:"100%",
-              padding:"11px 16px 11px 40px",
-              borderRadius:10,
-              border:"1px solid rgba(255,255,255,0.08)",
-              fontSize:14,
-              fontFamily:font,
-              background:"rgba(255,255,255,0.05)",
-              color:"#e8f5e9",
+              width:"100%", padding:"11px 16px 11px 40px", borderRadius:10,
+              border:"1px solid rgba(255,255,255,0.08)", fontSize:14, fontFamily:font,
+              background:"rgba(255,255,255,0.05)", color:"#e8f5e9",
             }}
           />
         </div>
@@ -430,11 +424,7 @@ const Opportunities = () => {
         {filtered.length === 0 ? (
           <p style={{ color:"rgba(255,255,255,0.35)", fontSize:14 }}>No opportunities found</p>
         ) : (
-          <div style={{
-            display:"grid",
-            gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))",
-            gap:16,
-          }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px, 1fr))", gap:16 }}>
             {filtered.map((opp, idx) => (
               <div
                 key={opp._id}
@@ -442,25 +432,17 @@ const Opportunities = () => {
                 className={`opp-card${id === opp._id ? " highlighted" : ""}`}
                 style={{
                   borderRadius:16,
-                  // ✅ FIX: card bg responds to darkMode
                   background: darkMode ? "#1e2d1e" : "#f7f9f7",
                   border: darkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.07)",
                   boxShadow:"0 2px 12px rgba(0,0,0,0.18)",
                   padding:"22px 24px",
-                  display:"flex",
-                  flexDirection:"column",
-                  gap:12,
+                  display:"flex", flexDirection:"column", gap:12,
                   animationDelay:`${idx * 0.04}s`,
                 }}
               >
                 {/* TITLE + STATUS */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
-                  <h3 style={{
-                    margin:0, fontSize:15, fontWeight:700,
-                    // ✅ FIX: title color
-                    color: darkMode ? "#e8f5e9" : T.bDark,
-                    fontFamily:serif, lineHeight:1.3,
-                  }}>
+                  <h3 style={{ margin:0, fontSize:15, fontWeight:700, color: darkMode ? "#e8f5e9" : T.bDark, fontFamily:serif, lineHeight:1.3 }}>
                     {opp.title}
                   </h3>
                   <StatusBadge status={opp.status} />
@@ -470,10 +452,8 @@ const Opportunities = () => {
                 {opp.description && (
                   <p style={{
                     fontSize:13, margin:0, lineHeight:1.6,
-                    // ✅ FIX: description color
                     color: darkMode ? "rgba(255,255,255,0.55)" : T.textSoft,
-                    display:"-webkit-box", WebkitLineClamp:3,
-                    WebkitBoxOrient:"vertical", overflow:"hidden",
+                    display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden",
                   }}>
                     {opp.description}
                   </p>
@@ -482,24 +462,17 @@ const Opportunities = () => {
                 {/* META */}
                 <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                   {opp.ngo?.name && (
-                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5,
-                      // ✅ FIX: meta text color
-                      color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid,
-                    }}>
+                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5, color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid }}>
                       <Building2 size={13} color={darkMode ? "#81c784" : T.bLight} /> {opp.ngo.name}
                     </span>
                   )}
                   {opp.location && (
-                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5,
-                      color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid,
-                    }}>
+                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5, color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid }}>
                       <MapPin size={13} color={darkMode ? "#81c784" : T.bLight} /> {opp.location}
                     </span>
                   )}
                   {opp.duration && (
-                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5,
-                      color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid,
-                    }}>
+                    <span style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5, color: darkMode ? "rgba(255,255,255,0.6)" : T.textMid }}>
                       <Clock size={13} color={darkMode ? "#81c784" : T.bLight} /> {opp.duration}
                     </span>
                   )}
@@ -511,7 +484,6 @@ const Opportunities = () => {
                     {opp.requiredSkills.map((skill, i) => (
                       <span key={i} style={{
                         padding:"3px 9px", borderRadius:20,
-                        // ✅ FIX: skill pills in dark mode
                         background: darkMode ? "rgba(67,160,71,0.15)" : T.gPale,
                         color: darkMode ? "#81c784" : T.gDark,
                         fontSize:11.5, fontWeight:500,
@@ -524,7 +496,6 @@ const Opportunities = () => {
                 {/* ACTIONS */}
                 {!isNgo && (
                   <div style={{
-                    // ✅ FIX: divider color
                     borderTop: darkMode ? "1px solid rgba(255,255,255,0.08)" : `1px solid ${T.bPale}`,
                     paddingTop:14, marginTop:"auto", display:"flex", flexDirection:"column", gap:8,
                   }}>
@@ -537,9 +508,7 @@ const Opportunities = () => {
                         disabled={!!applicationStatus[opp._id]}
                         style={{
                           width:"100%", padding:"11px",
-                          background: applicationStatus[opp._id]
-                            ? "#e5e7eb"
-                            : "linear-gradient(135deg, #43a047, #2e7d32)",
+                          background: applicationStatus[opp._id] ? "#e5e7eb" : "linear-gradient(135deg, #43a047, #2e7d32)",
                           color: applicationStatus[opp._id] ? "#9ca3af" : "#fff",
                           border:"none", borderRadius:10,
                           fontSize:14, fontWeight:600, fontFamily:font,
@@ -555,14 +524,13 @@ const Opportunities = () => {
                         background: darkMode ? "rgba(255,255,255,0.08)" : "#f3f4f6",
                         color: darkMode ? "rgba(255,255,255,0.3)" : "#9ca3af",
                         border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
-                        borderRadius:10,
-                        fontSize:14, fontWeight:600, fontFamily:font, cursor:"not-allowed",
+                        borderRadius:10, fontSize:14, fontWeight:600, fontFamily:font, cursor:"not-allowed",
                       }}>
                         Not Available
                       </button>
                     )}
 
-                    {/* MESSAGE NGO BUTTON */}
+                    {/* MESSAGE NGO */}
                     <button
                       className="btn-message"
                       onClick={() => navigate("/messages", {
@@ -572,20 +540,14 @@ const Opportunities = () => {
                         }
                       })}
                       style={{
-                        width:"100%",
-                        padding:"11px",
+                        width:"100%", padding:"11px",
                         background:"linear-gradient(135deg, #e53935, #b71c1c)",
-                        color:"#fff",
-                        border:"none",
-                        borderRadius:10,
-                        fontSize:14,
-                        fontWeight:600,
-                        fontFamily:font,
-                        cursor:"pointer",
-                        boxShadow:"0 4px 14px rgba(229,57,53,.3)",
+                        color:"#fff", border:"none", borderRadius:10,
+                        fontSize:14, fontWeight:600, fontFamily:font,
+                        cursor:"pointer", boxShadow:"0 4px 14px rgba(229,57,53,.3)",
                       }}
                     >
-                      💬 Message NGO
+                       Message NGO
                     </button>
                   </div>
                 )}
@@ -599,4 +561,4 @@ const Opportunities = () => {
   );
 };
 
-export default Opportunities;
+export default Opportunities

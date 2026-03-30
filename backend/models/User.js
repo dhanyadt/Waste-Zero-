@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema(
     },
 
     profilePic: { type: String },
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active"
+    }
   },
   { timestamps: true },
 );

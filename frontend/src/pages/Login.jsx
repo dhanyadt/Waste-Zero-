@@ -67,11 +67,13 @@ const Login = () => {
       console.log("Login successful:", data.user);
 
       // Redirect by role
-      if (data.user.role === "ngo") {
-        navigate("/ngo-dashboard");
-      } else {
-        navigate("/volunteer-dashboard");
-      }
+      if (data.user.role === "admin") {
+  navigate("/admin");
+} else if (data.user.role === "ngo") {
+  navigate("/ngo-dashboard");
+} else {
+  navigate("/volunteer-dashboard");
+}
 
     } catch (err) {
       console.error("Login error:", err);
