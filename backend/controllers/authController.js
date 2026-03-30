@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const validator = require("validator");
 const generateToken = require("../utils/generateToken");
 
+
 // ================= REGISTER =================
 exports.registerUser = async (req, res) => {
   try {
@@ -33,7 +34,6 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // ✅ INCLUDE ADMIN ROLE
     if (!["volunteer", "ngo", "admin"].includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
@@ -61,7 +61,6 @@ exports.registerUser = async (req, res) => {
       role: normalizedRole,
     });
 
-    // ✅ INCLUDE ROLE IN TOKEN
     const token = generateToken(user._id, user.role);
 
     res.status(201).json({
@@ -79,6 +78,7 @@ exports.registerUser = async (req, res) => {
         bio: user.bio,
       },
     });
+
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({
@@ -88,9 +88,14 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+
 // ================= LOGIN =================
+
+
 exports.loginUser = async (req, res) => {
   try {
+    
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -101,7 +106,9 @@ exports.loginUser = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
     const user = await User.findOne({ email: normalizedEmail });
+
 
     if (!user) {
       return res.status(400).json({
@@ -110,8 +117,10 @@ exports.loginUser = async (req, res) => {
       });
     }
 
+
     let isMatch = false;
 
+    // If password is hashed
     if (
       typeof user.password === "string" &&
       (user.password.startsWith("$2a$") ||
@@ -120,16 +129,22 @@ exports.loginUser = async (req, res) => {
     ) {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
+      // Plain text password fallback (for old accounts)
       if (password === user.password) {
         isMatch = true;
 
+        // Upgrade to hashed password automatically
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         user.password = hashedPassword;
         await user.save();
+
+        console.log("Password upgraded to bcrypt hash");
       }
     }
+
+   
 
     if (!isMatch) {
       return res.status(400).json({
@@ -157,12 +172,14 @@ exports.loginUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
+
 
 // ================= GET PROFILE =================
 exports.getUserProfile = async (req, res) => {
@@ -181,6 +198,7 @@ exports.getUserProfile = async (req, res) => {
     });
   }
 };
+
 
 // ================= UPDATE PROFILE =================
 exports.updateUserProfile = async (req, res) => {
@@ -204,8 +222,18 @@ exports.updateUserProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: updatedUser,
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        role: updatedUser.role,
+        skills: updatedUser.skills,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+      },
     });
+
   } catch (error) {
     console.error("Update Profile Error:", error);
     res.status(500).json({
@@ -215,6 +243,7 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
+
 // ================= CHANGE PASSWORD =================
 exports.changePassword = async (req, res) => {
   try {
@@ -223,7 +252,22 @@ exports.changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (!validator.isStrongPassword(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol",
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password cannot be same as current password",
       });
     }
 
@@ -239,14 +283,16 @@ exports.changePassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
 
+    user.password = hashedPassword;
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
     });
+
   } catch (error) {
     console.error("Change Password Error:", error);
     res.status(500).json({
