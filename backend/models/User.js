@@ -2,11 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    name: { type: String, required: true, trim: true },
 
     email: {
       type: String,
@@ -15,32 +11,26 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    username: {
-      type: String,
-      required: false,
-    },
 
-    password: {
-      type: String,
-      required: false,
-    },
+    username: { type: String },
+
+    password: { type: String },
 
     role: {
       type: String,
       enum: ["volunteer", "ngo", "admin"],
-      default: null,
-      required: false,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
     },
 
     skills: {
       type: [String],
       default: [],
-    },
-
-    status: {
-      type: String,
-      enum: ["ACTIVE", "SUSPENDED"],
-      default: "ACTIVE",
     },
 
     location: {
@@ -52,6 +42,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
     googleId: {
       type: String,
       unique: true,
@@ -65,7 +56,8 @@ const userSchema = new mongoose.Schema(
       default: "active"
     }
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema);
+/* ================================
+   🔥 INDEXES (MILESTONE 4)
