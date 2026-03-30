@@ -16,75 +16,29 @@ const {
   getOpportunityApplicants,
 } = require("../controllers/opportunityController");
 
-/* ===============================
-   CREATE OPPORTUNITY (NGO only)
-================================ */
+// CREATE OPPORTUNITY (NGO only)
 router.post("/", authMiddleware, roleMiddleware("ngo"), createOpportunity);
 
-/* ===============================
-   NGO: VIEW THEIR OPPORTUNITIES
-================================ */
-router.get(
-  "/my-opportunities",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  getMyOpportunities
-);
+// NGO: VIEW THEIR OPPORTUNITIES
+router.get("/my-opportunities", authMiddleware, roleMiddleware("ngo"), getMyOpportunities);
 
-/* ===============================
-   VOLUNTEER: VIEW APPLICATIONS
-================================ */
-router.get(
-  "/my-applications",
-  authMiddleware,
-  roleMiddleware("volunteer"),
-  getMyApplications
-);
+// VOLUNTEER: VIEW APPLICATIONS
+router.get("/my-applications", authMiddleware, roleMiddleware("volunteer"), getMyApplications);
 
-/* ===============================
-   VOLUNTEER APPLY
-================================ */
-router.post(
-  "/:id/apply",
-  authMiddleware,
-  roleMiddleware("volunteer"),
-  applyToOpportunity
-);
+// VOLUNTEER APPLY
+router.post("/:id/apply", authMiddleware, roleMiddleware("volunteer"), applyToOpportunity);
 
-/* ===============================
-   NGO: VIEW APPLICANTS
-================================ */
-router.get(
-  "/:id/applicants",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  getOpportunityApplicants
-);
+// NGO: VIEW APPLICANTS WITH SKILL MATCH
+router.get("/:id/applicants", authMiddleware, roleMiddleware("ngo"), getOpportunityApplicants);
 
-/* ===============================
-   PUBLIC ROUTES
-================================ */
+// PUBLIC ROUTES
 router.get("/", getAllOpportunities);
 router.get("/:id", getOpportunityById);
 
-/* ===============================
-   UPDATE (NGO only)
-================================ */
-router.put(
-  "/:id",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  updateOpportunity
-);
+// UPDATE OPPORTUNITY (NGO only)
+router.put("/:id", authMiddleware, roleMiddleware("ngo"), updateOpportunity);
 
-/* ===============================
-   DELETE (NGO only)
-================================ */
-router.delete(
-  "/:id",
-  authMiddleware,
-  roleMiddleware("ngo"),
-  deleteOpportunity
-);
+// DELETE OPPORTUNITY (NGO only)
+router.delete("/:id", authMiddleware, roleMiddleware("ngo"), deleteOpportunity);
 
 module.exports = router;
