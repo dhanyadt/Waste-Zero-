@@ -50,15 +50,14 @@ const userSchema = new mongoose.Schema(
     },
 
     profilePic: { type: String },
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active"
+    }
   },
   { timestamps: true }
 );
 
 /* ================================
    🔥 INDEXES (MILESTONE 4)
-================================ */
-
-userSchema.index({ role: 1 });
-userSchema.index({ status: 1 });
-
-module.exports = mongoose.model("User", userSchema);

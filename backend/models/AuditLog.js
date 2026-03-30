@@ -24,6 +24,18 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true },
 );
