@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Opportunity = require("../models/Opportunity");
 const AuditLog = require("../models/AuditLog");
+const Message = require("../models/Message");
 
 // Helper to check valid ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -112,7 +113,9 @@ exports.updateUserStatus = async (req, res) => {
       action: status.toUpperCase() === "SUSPENDED" ? "USER_SUSPENDED" : "USER_ACTIVATED",
       targetType: "USER",
       targetId: user._id,
+      user_id: user._id,
       details: `User status changed to ${user.status}`,
+      metadata: { previousStatus: user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE", newStatus: user.status },
     });
 
     res.status(200).json({
@@ -184,7 +187,9 @@ exports.deleteOpportunity = async (req, res) => {
       action: "OPPORTUNITY_DELETED",
       targetType: "OPPORTUNITY",
       targetId: opportunity._id,
+      user_id: opportunity.createdBy,
       details: `Deleted opportunity: ${opportunity.title}`,
+      metadata: { opportunityTitle: opportunity.title, deletedBy: req.user._id },
     });
 
     res.status(200).json({ success: true, message: "Opportunity deleted successfully" });
@@ -194,76 +199,118 @@ exports.deleteOpportunity = async (req, res) => {
   }
 };
 
-// ── GET /api/admin/reports ────────────────────────────────────
+
+// GET /api/admin/reports
 
 exports.getAdminReports = async (req, res) => {
   try {
     const { date_from, date_to } = req.query;
-    const match = {};
-    if (date_from) match.$gte = new Date(date_from);
-    if (date_to) match.$lte = new Date(date_to + "T23:59:59.999Z");
 
-    const userGrowth = await User.aggregate([
-      { $match: match },
+    let dateFilter = {};
+    if (date_from || date_to) {
+      dateFilter.createdAt = {};
+      if (date_from) dateFilter.createdAt.$gte = new Date(date_from);
+      if (date_to) {
+        const end = new Date(date_to);
+        end.setHours(23, 59, 59, 999);
+        dateFilter.createdAt.$lte = end;
+      }
+    }
+
+    // 🔹 USER STATS
+    const usersStats = await User.aggregate([
+      { $match: dateFilter },
       {
-        $group: {
-          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-      {
-        $project: {
-          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
-          count: 1, _id: 0,
-        },
-      },
+        $facet: {
+          totalUsers: [{ $count: "count" }],
+          statusCounts: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+          roleCounts: [{ $group: { _id: { $toLower: "$role" }, count: { $sum: 1 } } }]
+        }
+      }
     ]);
 
-    const oppGrowth = await Opportunity.aggregate([
-      { $match: { createdAt: match } },
+    const stats = usersStats[0] || {};
+    const formattedUserStats = {
+      totalUsers: stats.totalUsers?.[0]?.count || 0,
+      activeUsers: stats.statusCounts?.find(s => s._id === "ACTIVE")?.count || 0,
+      suspendedUsers: stats.statusCounts?.find(s => s._id === "SUSPENDED")?.count || 0,
+      roles: {
+        volunteers: stats.roleCounts?.find(r => r._id === "volunteer")?.count || 0,
+        ngo: stats.roleCounts?.find(r => r._id === "ngo")?.count || 0,
+        admin: stats.roleCounts?.find(r => r._id === "admin")?.count || 0,
+      }
+    };
+
+    // 🔹 OPPORTUNITY STATS
+    const opportunitiesStats = await Opportunity.aggregate([
+      { $match: dateFilter },
       {
-        $group: {
-          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-      {
-        $project: {
-          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
-          count: 1, _id: 0,
-        },
-      },
+        $facet: {
+          totalOpportunities: [{ $count: "count" }],
+          byLocation: [
+            { $group: { _id: "$location", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+          ],
+          byNGO: [
+            { $group: { _id: "$createdBy", count: { $sum: 1 } } },
+            { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
+            { $unwind: "$ngoDetails" },
+            { $project: { name: "$ngoDetails.name", count: 1 } }
+          ]
+        }
+      }
     ]);
 
-    const participation = await Opportunity.aggregate([
-      { $match: { createdAt: match } },
-      { $unwind: "$applicants" },
+    const opStats = opportunitiesStats[0] || {};
+    const formattedOpportunityStats = {
+      totalOpportunities: opStats.totalOpportunities?.[0]?.count || 0,
+      opportunitiesByLocation: opStats.byLocation || [],
+      opportunitiesByNGO: opStats.byNGO || []
+    };
+
+    // 🔹 MESSAGE STATS
+    const messagesStats = await Message.aggregate([
+      { $match: dateFilter },
       {
-        $group: {
-          _id: { year: { $year: "$applicants.appliedAt" }, month: { $month: "$applicants.appliedAt" } },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-      {
-        $project: {
-          month: { $concat: [{ $toString: "$_id.month" }, "-", { $toString: "$_id.year" }] },
-          count: 1, _id: 0,
-        },
-      },
+        $facet: {
+          totalMessages: [{ $count: "count" }],
+          topActiveVolunteers: [
+            { $group: { _id: "$sender_id", count: { $sum: 1 } } },
+            { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "userDetails" } },
+            { $unwind: "$userDetails" },
+            { $match: { "userDetails.role": "volunteer" } },
+            { $project: { name: "$userDetails.name", count: 1 } },
+            { $sort: { count: -1 } },
+            { $limit: 5 }
+          ]
+        }
+      }
     ]);
 
-    res.status(200).json({ success: true, userGrowth, oppGrowth, participation });
+    const mgStats = messagesStats[0] || {};
+    const formattedMessageStats = {
+      totalMessages: mgStats.totalMessages?.[0]?.count || 0,
+      topActiveVolunteers: mgStats.topActiveVolunteers || [],
+    };
+
+    res.status(200).json({
+      success: true,
+      reports: {
+        users: formattedUserStats,
+        opportunities: formattedOpportunityStats,
+        messages: formattedMessageStats
+      }
+    });
+
   } catch (error) {
     console.error("Admin reports error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+ 
 
 // ── GET /api/admin/logs ───────────────────────────────────────
-// manisha's intent + main's AuditLog model (replaces hardcoded sample data)
+// main's AuditLog model (replaces hardcoded sample data)
 exports.getAdminLogs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -288,3 +335,5 @@ exports.getAdminLogs = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+

@@ -1,35 +1,29 @@
-
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+
 const adminController = require("../controllers/adminController");
-const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
 // Protect all routes
 router.use(authMiddleware);
-router.use(roleMiddleware('admin'));
+router.use(roleMiddleware("admin"));
 
-// @desc  Admin overview dashboard stats
-router.get('/overview', getAdminOverview);
+// Dashboard
+router.get("/overview", adminController.getDashboardOverview);
 
-// @desc  Get all users
-router.get('/users', getAdminUsers);
+// Users
+router.get("/users", adminController.getAllUsers);
+router.patch("/users/:id/status", adminController.updateUserStatus);
 
-// @desc  Toggle user status
-router.patch('/users/:id/status', toggleUserStatus);
+// Opportunities
+router.get("/opportunities", adminController.getAllOpportunities);
+router.delete("/opportunities/:id", adminController.deleteOpportunity);
 
-// @desc  Get all opportunities
-router.get('/opportunities', getAdminOpportunities);
+// Reports
+router.get("/reports", adminController.getAdminReports);
 
-// @desc  Delete opportunity
-router.delete('/opportunities/:id', deleteAdminOpportunity);
-
-// @desc  Get reports and charts
-router.get('/reports', getAdminReports);
-
-// @desc  Get system logs/activity
-router.get('/logs', getAdminLogs);
+// Logs
+router.get("/logs", adminController.getAdminLogs);
 
 module.exports = router;
-
-
