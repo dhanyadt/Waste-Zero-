@@ -10,16 +10,16 @@ const {
 
 const authMiddleware = require("../middleware/authMiddleware");
 
-// ✅ IMPORTANT: "/" MUST COME BEFORE "/:userId"
+
 router.post("/", authMiddleware, sendMessage);
 
-// ✅ conversations list
+//  conversations list
 router.get("/", authMiddleware, getConversations);
 
-// ✅ chat between two users
+// chat between two users
 router.get("/:userId", authMiddleware, getMessages);
 
-// ✅ clear chat with a user
+// clear chat with a user
 router.delete("/:userId", authMiddleware, clearChat);
 
 module.exports = router;

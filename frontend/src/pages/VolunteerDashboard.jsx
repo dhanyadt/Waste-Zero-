@@ -78,7 +78,7 @@ const VolunteerDashboard = () => {
     const oppResponse = await getAllOpportunities();
     setOpportunities(oppResponse.data.opportunities || []);
 
-    // 🔥 NEW
+    // NEW
     const matchResponse = await getMatches();
     setMatches(matchResponse.data.matches || []);
 

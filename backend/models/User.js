@@ -15,7 +15,8 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    username: {
+
+   username: {
       type: String,
       required: false,
     },
@@ -37,10 +38,11 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+   
     status: {
       type: String,
-      enum: ["ACTIVE", "SUSPENDED"],
-      default: "ACTIVE",
+      enum: ["active", "suspended"],
+      default: "active"
     },
 
     location: {
@@ -52,20 +54,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
     googleId: {
       type: String,
       unique: true,
       sparse: true,
     },
 
-    profilePic: { type: String },
-    status: {
-      type: String,
-      enum: ["active", "suspended"],
-      default: "active"
-    }
+     profilePic: { type: String },
   },
+  
   { timestamps: true },
 );
+
+
+userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
 
 module.exports = mongoose.model("User", userSchema);

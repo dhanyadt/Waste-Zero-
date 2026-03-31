@@ -22,7 +22,7 @@ const messageSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true } // 🔥 THIS IS THE FIX
+  { timestamps: true } 
 );
 
 messageSchema.index({ sender_id: 1, receiver_id: 1, createdAt: -1 });

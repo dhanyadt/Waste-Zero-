@@ -1,32 +1,33 @@
-import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   LogOut,
-  Camera,
-  User,
+  Users,
   Target,
-  MessageSquare,
+  TrendingUp,
+  ScrollText,
+  Shield,
+  ChevronRight,
+  User,
 } from "lucide-react";
-import ProfileUploadModal from "../ui/ProfileUploadModal";
 
-const T = {
-  gDeep: "#1b5e20", gDark: "#2e7d32", gMid: "#43a047", gLight: "#81c784",
-  gPale: "#c8e6c9", gSage: "#a5c8a0",
-  bDark: "#3e2723", bMid: "#5d4037", bLight: "#8d6e63",
-  bPale: "#efebe9", bSand: "#d7ccc8",
-};
 const font = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
 
 const S = {
   sidebar: {
-    width: "240px", minHeight: "100vh",
+    width: "240px",
+    minHeight: "100vh",
     background: "linear-gradient(180deg, #1a2e1a 0%, #1f1a0e 50%, #2a1a0a 100%)",
-    display: "flex", flexDirection: "column", padding: "0",
-    position: "relative", overflow: "hidden", fontFamily: font,
-    boxShadow: "2px 0 20px rgba(0,0,0,.3)", flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    padding: "0",
+    position: "relative",
+    overflow: "hidden",
+    fontFamily: font,
+    boxShadow: "2px 0 20px rgba(0,0,0,.3)",
+    flexShrink: 0,
   },
   ring1: {
     position: "absolute", width: 280, height: 280, borderRadius: "50%",
@@ -42,9 +43,11 @@ const S = {
     top: 20, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
   },
   logoBar: {
-    padding: "20px 20px 0", display: "flex", alignItems: "center", gap: 10,
+    padding: "20px 20px 16px",
+    display: "flex", alignItems: "center", gap: 10,
     position: "relative", zIndex: 1,
-    borderBottom: "1px solid rgba(255,255,255,.06)", paddingBottom: 16, marginBottom: 4,
+    borderBottom: "1px solid rgba(255,255,255,.06)",
+    marginBottom: 4,
   },
   logoIcon: {
     width: 32, height: 32, borderRadius: 8,
@@ -54,28 +57,15 @@ const S = {
   logoText: {
     fontFamily: serif, fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-.2px",
   },
-  profileSection: {
-    padding: "16px 20px 12px", position: "relative", zIndex: 1,
-    borderBottom: "1px solid rgba(255,255,255,.06)", marginBottom: 8,
+  adminBadge: {
+    margin: "0 16px 8px",
+    padding: "10px 14px",
+    borderRadius: 10,
+    background: "rgba(67,160,71,.15)",
+    border: "1px solid rgba(67,160,71,.25)",
+    display: "flex", alignItems: "center", gap: 8,
+    position: "relative", zIndex: 1,
   },
-  avatarWrap: { position: "relative", width: 52, height: 52, marginBottom: 10 },
-  avatar: {
-    width: 52, height: 52, borderRadius: "50%",
-    background: `linear-gradient(135deg, ${T.gMid}, ${T.bMid})`,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 18, fontWeight: 700, color: "#fff",
-    border: "2px solid rgba(255,255,255,.15)", overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0,0,0,.3)",
-  },
-  cameraBtn: {
-    position: "absolute", bottom: -2, right: -2,
-    width: 20, height: 20, borderRadius: "50%",
-    background: T.gMid, border: "2px solid rgba(26,46,26,1)",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", transition: "background .2s",
-  },
-  userName: { fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 2 },
-  userRole: { fontSize: 12, color: T.gSage, textTransform: "capitalize", marginBottom: 6 },
   navSection: { padding: "4px 12px", flex: 1, position: "relative", zIndex: 1 },
   sectionLabel: {
     fontSize: 10, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase",
@@ -90,7 +80,7 @@ const S = {
       ? "linear-gradient(135deg, rgba(67,160,71,.25), rgba(46,125,50,.15))"
       : "transparent",
     color: active ? "#fff" : "rgba(255,255,255,.6)",
-    borderLeft: active ? `3px solid ${T.gMid}` : "3px solid transparent",
+    borderLeft: active ? "3px solid #43a047" : "3px solid transparent",
     transition: "all .2s", textAlign: "left",
   }),
   iconWrap: (active) => ({
@@ -113,26 +103,30 @@ const S = {
   },
 };
 
-const Sidebar = () => {
-  const { user, logout, notificationCount } = useAuth();
+const adminNav = [
+  { label: "Dashboard",            path: "/admin",               icon: <LayoutDashboard size={14} /> },
+  { label: "My Profile",           path: "/profile",             icon: <User size={14} /> },
+  { label: "Manage Users",         path: "/admin/users",         icon: <Users size={14} /> },
+  { label: "Manage Opportunities", path: "/admin/opportunities", icon: <Target size={14} /> },
+  { label: "Reports",              path: "/admin/reports",       icon: <TrendingUp size={14} /> },
+  { label: "Logs",                 path: "/admin/logs",          icon: <ScrollText size={14} /> },
+];
+
+const AdminSidebar = () => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!user) return null;
 
-  const isActive = (path) => location.pathname === path;
-
-  const mainNav = [
-    { label: "Dashboard",     path: "/dashboard",     icon: <LayoutDashboard size={14} /> }, 
-    { label: "Opportunities", path: "/opportunities", icon: <Target size={14} /> },
-    { label: "Messages",      path: "/messages",      icon: <MessageSquare size={14} /> },
-    { label: "My Profile",    path: "/profile",       icon: <User size={14} /> },
-  ];
+  const isActive = (path) =>
+    path === "/admin"
+      ? location.pathname === "/admin"
+      : location.pathname.startsWith(path);
 
   const initials = user?.name
     ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
-    : "";
+    : "A";
 
   return (
     <div style={S.sidebar}>
@@ -146,40 +140,45 @@ const Sidebar = () => {
         <span style={S.logoText}>WasteZero</span>
       </div>
 
-      {/* Profile */}
-      <div style={S.profileSection}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={S.avatarWrap}>
-            <div style={S.avatar}>
-              {user?.profilePicture ? (
-                <img src={user.profilePicture} alt="Profile"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                initials
-              )}
-            </div>
-            <button style={S.cameraBtn} onClick={() => setIsModalOpen(true)}>
-              <Camera size={10} color="#fff" />
-            </button>
-          </div>
-          <div>
-            <p style={S.userName}>{user?.name || ""}</p>
-            <p style={S.userRole}>
-              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : ""}
-            </p>
+      {/* Admin identity badge */}
+      <div style={S.adminBadge}>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%",
+          background: "linear-gradient(135deg, #43a047, #5d4037)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0,
+        }}>
+          {initials}
+        </div>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <p style={{
+            fontSize: 13, fontWeight: 600, color: "#fff", margin: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {user.name}
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+            <Shield size={10} color="#81c784" />
+            <span style={{ fontSize: 11, color: "#81c784", fontWeight: 600, letterSpacing: ".4px" }}>
+              Admin
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Main nav — 4 items only */}
+      {/* Nav */}
       <div style={S.navSection}>
-        <p style={S.sectionLabel}>Main Menu</p>
-        {mainNav.map(({ label, path, icon }) => (
-          <button key={path} style={S.navBtn(isActive(path))}
+        <p style={S.sectionLabel}>Admin Panel</p>
+        {adminNav.map(({ label, path, icon }) => (
+          <button
+            key={path}
+            style={S.navBtn(isActive(path))}
             onClick={() => navigate(path)}
             onMouseEnter={(e) => {
-              if (!isActive(path)) e.currentTarget.style.background = "rgba(255,255,255,.06)";
-              e.currentTarget.style.color = "rgba(255,255,255,.9)";
+              if (!isActive(path)) {
+                e.currentTarget.style.background = "rgba(255,255,255,.06)";
+                e.currentTarget.style.color = "rgba(255,255,255,.9)";
+              }
             }}
             onMouseLeave={(e) => {
               if (!isActive(path)) {
@@ -189,24 +188,16 @@ const Sidebar = () => {
             }}
           >
             <div style={S.iconWrap(isActive(path))}>{icon}</div>
-            <span style={{ flex: 1, textAlign: "left" }}>{label}</span>
-            {path === "/messages" && notificationCount > 0 && (
-              <span style={{
-                minWidth: 18, height: 18, padding: "0 6px", borderRadius: 999,
-                background: "rgba(239,68,68,.85)", color: "#fff",
-                fontSize: 11, fontWeight: 700,
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {notificationCount}
-              </span>
-            )}
+            <span style={{ flex: 1 }}>{label}</span>
+            {isActive(path) && <ChevronRight size={12} color="rgba(255,255,255,.4)" />}
           </button>
         ))}
       </div>
 
       {/* Logout */}
       <div style={S.bottomSection}>
-        <button style={S.logoutBtn}
+        <button
+          style={S.logoutBtn}
           onClick={() => { logout(); navigate("/"); }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "rgba(239,68,68,.1)";
@@ -221,10 +212,8 @@ const Sidebar = () => {
           Sign Out
         </button>
       </div>
-
-      <ProfileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;

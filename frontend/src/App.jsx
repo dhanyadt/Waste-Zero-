@@ -17,7 +17,7 @@ import Matches from "./pages/Matches";
 import SelectRole from "./pages/SelectRole";
 import Messages from "./pages/Messages";
 
-// Admin — from manisha-milestone4
+// Admin 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminOpportunities from "./pages/AdminOpportunities";
@@ -139,7 +139,7 @@ function App() {
             }
           />
 
-          {/* ADMIN — from manisha-milestone4 */}
+          {/* ADMIN  */}
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
           <Route path="/admin/opportunities" element={<AdminRoute><AdminOpportunities /></AdminRoute>} />

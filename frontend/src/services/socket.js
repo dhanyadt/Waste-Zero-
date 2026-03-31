@@ -35,7 +35,7 @@ export const connectSocket = ({ token, userId, ...options } = {}) => {
 
   socket = io(url, {
     withCredentials: true,
-    transports: ["websocket"], // 🔥 IMPORTANT FIX
+    transports: ["websocket"], 
     reconnection: true,
     ...options,
   });
@@ -44,7 +44,7 @@ export const connectSocket = ({ token, userId, ...options } = {}) => {
     console.log("✅ Socket connected:", socket.id);
 
     if (userId) {
-      socket.emit("register", userId); // 🔥 MUST match backend
+      socket.emit("register", userId); 
     }
   });
 

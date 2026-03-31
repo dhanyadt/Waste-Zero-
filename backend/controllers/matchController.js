@@ -34,7 +34,7 @@ exports.getMatches = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
-    // ❌ REMOVE SOCKET EMITS FROM GET API
+    //  REMOVE SOCKET EMITS FROM GET API
 
     res.status(200).json({
       success: true,
@@ -93,7 +93,7 @@ exports.getMatchedVolunteers = async (req, res) => {
       .filter((item) => item.matchScore > 0)
       .sort((a, b) => b.matchScore - a.matchScore);
 
-    // ❌ REMOVE SOCKET EMITS FROM GET API
+    //  REMOVE SOCKET EMITS FROM GET API
 
     res.status(200).json({
       success: true,

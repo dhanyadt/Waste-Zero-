@@ -38,7 +38,7 @@ io.on("connection", (socket) => {
 
   socket.on("register", (userId) => {
     users[userId] = socket.id;
-    socket.join(userId); // ✅ THIS is what makes io.to(receiver_id) work
+    socket.join(userId); 
     console.log("User registered:", userId);
   });
 

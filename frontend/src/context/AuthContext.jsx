@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [matches, setMatches] = useState([]);
 
-  // ✅ Global conversations state — stays in sync across all pages
+  // Global conversations state — stays in sync across all pages
   const [conversations, setConversations] = useState([]);
   const conversationsLoadedRef = useRef(false);
 
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const setMessagesPageActive = (active) => { messagesPageActiveRef.current = active; };
   const setMatchesPageActive = (active) => { matchesPageActiveRef.current = active; };
 
-  // ✅ Fetch conversations once after login and expose via context
+  // Fetch conversations once after login and expose via context
   const fetchConversations = async () => {
     try {
       const res = await API.get("/messages");
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
         const senderId = data.sender_id || data.senderId;
 
-        // ✅ Always update global conversations list regardless of current page
+        // update global conversations list regardless of current page
         setConversations((prev) => {
           const exists = prev.find((c) => String(c.user._id) === String(senderId));
           if (exists) {
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
         setUser(freshUser);
         localStorage.setItem("user", JSON.stringify(freshUser));
         initSocket(savedToken, freshUser?.id || freshUser?._id);
-        // ✅ Load conversations globally as soon as user is confirmed
+        // load conversations globally as soon as user is confirmed
         fetchConversations();
       } catch (err) {
         console.error("Session restore failed:", err.message);
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
     const token = localStorage.getItem("token");
     initSocket(token, userData?.id || userData?._id);
-    // ✅ Also load conversations on manual user update (e.g. after login)
+    // load conversations on manual user update (e.g. after login)
     fetchConversations();
   };
 

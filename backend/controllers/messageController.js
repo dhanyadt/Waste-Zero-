@@ -19,7 +19,7 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    // ✅ CHECK MATCH BEFORE SENDING
+    // CHECK MATCH BEFORE SENDING
     const sender = await User.findById(req.user._id);
     const receiver = await User.findById(receiver_id);
 
@@ -40,7 +40,7 @@ exports.sendMessage = async (req, res) => {
       message: "You have a new message",
     });
 
-    // 🔥 SOCKET EMIT (REAL-TIME MESSAGE)
+    // SOCKET EMIT (REAL-TIME MESSAGE)
     const io = req.app.get("io");
 
     // Secure targeted emit to recipient's room
@@ -53,7 +53,7 @@ exports.sendMessage = async (req, res) => {
       read: false,
     });
 
-    // 🔔 OPTIONAL NOTIFICATION EVENT
+    // OPTIONAL NOTIFICATION EVENT
     io.to(receiver_id).emit("newNotification", {
       type: "message",
       senderId: req.user._id,

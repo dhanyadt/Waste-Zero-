@@ -40,4 +40,9 @@ const auditLogSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+/* ================================
+    INDEXES (MILESTONE 4)
+================================ */
+auditLogSchema.index({ timestamp: -1 });
+
 module.exports = mongoose.model("AuditLog", auditLogSchema);

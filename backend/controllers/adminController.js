@@ -4,30 +4,26 @@ const Opportunity = require("../models/Opportunity");
 const AuditLog = require("../models/AuditLog");
 const Message = require("../models/Message");
 
-// Helper to check valid ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+const getAdminId = (req) => req.user?._id || req.user?.id;
 
 // ── GET /api/admin/overview ───────────────────────────────────
-// main's version — richer (role breakdown, AuditLog activity)
 exports.getDashboardOverview = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
 
     const roles = await User.aggregate([
-      { $group: { _id: { $toUpper: "$role" }, count: { $sum: 1 } } },
+      { $group: { _id: { $toLower: "$role" }, count: { $sum: 1 } } },
     ]);
 
-    let usersByRole = { VOLUNTEER: 0, NGO: 0, ADMIN: 0 };
+    let usersByRole = { volunteer: 0, ngo: 0, admin: 0 };
     roles.forEach((r) => {
-      if (r._id === "VOLUNTEER") usersByRole.VOLUNTEER += r.count;
-      else if (r._id === "NGO") usersByRole.NGO += r.count;
-      else if (r._id === "ADMIN") usersByRole.ADMIN += r.count;
+      if (r._id in usersByRole) usersByRole[r._id] = r.count;
     });
 
-    // stats: activeNgos, activeVolunteers
     const [activeNgos, activeVolunteers] = await Promise.all([
-      User.countDocuments({ role: "ngo", status: "active" }),
-      User.countDocuments({ role: "volunteer", status: "active" }),
+      User.countDocuments({ role: "ngo",       status: { $ne: "suspended" } }),
+      User.countDocuments({ role: "volunteer", status: { $ne: "suspended" } }),
     ]);
 
     const totalOpportunities = await Opportunity.countDocuments();
@@ -37,39 +33,53 @@ exports.getDashboardOverview = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
+    const mostActiveNgoAgg = await Opportunity.aggregate([
+      { $group: { _id: "$createdBy", opportunityCount: { $sum: 1 } } },
+      { $sort: { opportunityCount: -1 } },
+      { $limit: 1 },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
+      { $unwind: "$ngoDetails" },
+      { $project: { _id: "$ngoDetails._id", name: "$ngoDetails.name", email: "$ngoDetails.email", location: "$ngoDetails.location", opportunityCount: 1 } },
+    ]);
+
+    const mostActiveVolunteerAgg = await Opportunity.aggregate([
+      { $match: { "applicants.0": { $exists: true } } },
+      { $unwind: "$applicants" },
+      { $group: { _id: "$applicants.user", applicationCount: { $sum: 1 } } },
+      { $sort: { applicationCount: -1 } },
+      { $limit: 1 },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "volunteerDetails" } },
+      { $unwind: "$volunteerDetails" },
+      { $project: { _id: "$volunteerDetails._id", name: "$volunteerDetails.name", email: "$volunteerDetails.email", location: "$volunteerDetails.location", applicationCount: 1 } },
+    ]);
+
     res.status(200).json({
       success: true,
       data: {
-        totalUsers,
-        usersByRole,
-        activeNgos,
-        activeVolunteers,
-        totalOpportunities,
-        recentActivities,
+        totalUsers, usersByRole, activeNgos, activeVolunteers,
+        totalOpportunities, recentActivities,
+        mostActiveNgo:       mostActiveNgoAgg[0]       || null,
+        mostActiveVolunteer: mostActiveVolunteerAgg[0] || null,
       },
     });
   } catch (error) {
     console.error("Dashboard overview error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
 // ── GET /api/admin/users ──────────────────────────────────────
-// main's version — pagination + role/status filter
 exports.getAllUsers = async (req, res) => {
   try {
-    const { role, status, page = 1, limit = 10 } = req.query;
+    const { role, status, limit = 200 } = req.query;
 
     let query = {};
-    if (role) query.role = { $in: [role.toLowerCase(), role.toUpperCase()] };
-    if (status) query.status = status.toUpperCase();
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    if (role)   query.role   = role.toLowerCase();
+    if (status) query.status = status.toLowerCase(); // ✅ always lowercase to match schema enum
 
     const users = await User.find(query)
       .select("-password")
       .sort({ createdAt: -1 })
-      .skip(skip)
       .limit(parseInt(limit));
 
     const total = await User.countDocuments(query);
@@ -77,16 +87,15 @@ exports.getAllUsers = async (req, res) => {
     res.status(200).json({
       success: true,
       data: users,
-      pagination: { total, page: parseInt(page), pages: Math.ceil(total / limit) },
+      pagination: { total, page: 1, pages: 1 },
     });
   } catch (error) {
     console.error("Get all users error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
 // ── PATCH /api/admin/users/:id/status ────────────────────────
-// main's version — validation + AuditLog + self-suspend protection
 exports.updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -95,28 +104,45 @@ exports.updateUserStatus = async (req, res) => {
     if (!isValidId(id))
       return res.status(400).json({ success: false, message: "Invalid User ID" });
 
-    if (!status || !["ACTIVE", "SUSPENDED"].includes(status.toUpperCase()))
-      return res.status(400).json({ success: false, message: "Invalid status value" });
+    //  User schema enum is "active" | "suspended"
+    const normalizedStatus = (status || "").toLowerCase().trim();
+    if (!["active", "suspended"].includes(normalizedStatus))
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status "${status}". Must be "active" or "suspended"`,
+      });
 
-    if (id === req.user._id.toString())
+    const adminId = getAdminId(req);
+    if (!adminId)
+      return res.status(401).json({ success: false, message: "Admin ID not found in token" });
+
+    if (id === adminId.toString())
       return res.status(400).json({ success: false, message: "Admin cannot suspend themselves" });
 
-    const user = await User.findById(id);
-    if (!user)
+    
+    const updateResult = await User.updateOne(
+      { _id: id },
+      { $set: { status: normalizedStatus } }
+    );
+
+    if (updateResult.matchedCount === 0)
       return res.status(404).json({ success: false, message: "User not found" });
 
-    user.status = status.toUpperCase();
-    await user.save();
+    const user = await User.findById(id).select("-password");
 
-    await AuditLog.create({
-      adminId: req.user._id,
-      action: status.toUpperCase() === "SUSPENDED" ? "USER_SUSPENDED" : "USER_ACTIVATED",
-      targetType: "USER",
-      targetId: user._id,
-      user_id: user._id,
-      details: `User status changed to ${user.status}`,
-      metadata: { previousStatus: user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE", newStatus: user.status },
-    });
+    try {
+      await AuditLog.create({
+        adminId,
+        action:     normalizedStatus === "suspended" ? "USER_SUSPENDED" : "USER_ACTIVATED",
+        targetType: "USER",
+        targetId:   user._id,
+        user_id:    user._id,
+        details:    `User ${user.name} status changed to ${normalizedStatus}`,
+        metadata:   { newStatus: normalizedStatus },
+      });
+    } catch (logErr) {
+      console.warn("AuditLog write failed (non-fatal):", logErr.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -125,20 +151,19 @@ exports.updateUserStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Update user status error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
-// ── GET /api/admin/opportunities ──────────────────────────────
-// merged 
+// ── GET /api/admin/opportunities ─────────────────────────────
 exports.getAllOpportunities = async (req, res) => {
   try {
     const { status, createdBy, location, ngo, page = 1, limit = 10 } = req.query;
 
     let query = {};
-    if (status) query.status = status.toLowerCase();
+    if (status)   query.status   = status.toLowerCase();
     if (location) query.location = { $regex: location, $options: "i" };
-    if (ngo) query["ngo.name"] = { $regex: ngo, $options: "i" };
+    if (ngo)      query.ngo      = ngo;
     if (createdBy) {
       if (!isValidId(createdBy))
         return res.status(400).json({ success: false, message: "Invalid createdBy ID" });
@@ -148,7 +173,7 @@ exports.getAllOpportunities = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const opportunities = await Opportunity.find(query)
-      .populate("ngo", "name email")
+      .populate("ngo",       "name email")
       .populate("createdBy", "name email role")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -159,16 +184,15 @@ exports.getAllOpportunities = async (req, res) => {
     res.status(200).json({
       success: true,
       data: opportunities,
-      pagination: { total, page: parseInt(page), pages: Math.ceil(total / limit) },
+      pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) },
     });
   } catch (error) {
     console.error("Get all opportunities error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
-// ── DELETE /api/admin/opportunities/:id ───────────────────────
-// main's version — validation + AuditLog
+// ── DELETE /api/admin/opportunities/:id ──────────────────────
 exports.deleteOpportunity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -182,26 +206,29 @@ exports.deleteOpportunity = async (req, res) => {
 
     await Opportunity.findByIdAndDelete(id);
 
-    await AuditLog.create({
-      adminId: req.user._id,
-      action: "OPPORTUNITY_DELETED",
-      targetType: "OPPORTUNITY",
-      targetId: opportunity._id,
-      user_id: opportunity.createdBy,
-      details: `Deleted opportunity: ${opportunity.title}`,
-      metadata: { opportunityTitle: opportunity.title, deletedBy: req.user._id },
-    });
+    const adminId = getAdminId(req);
+    try {
+      await AuditLog.create({
+        adminId,
+        action:     "OPPORTUNITY_DELETED",
+        targetType: "OPPORTUNITY",
+        targetId:   opportunity._id,
+        user_id:    opportunity.createdBy,
+        details:    `Deleted opportunity: ${opportunity.title}`,
+        metadata:   { opportunityTitle: opportunity.title, deletedBy: adminId },
+      });
+    } catch (logErr) {
+      console.warn("AuditLog write failed (non-fatal):", logErr.message);
+    }
 
     res.status(200).json({ success: true, message: "Opportunity deleted successfully" });
   } catch (error) {
     console.error("Delete opportunity error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 
-
-// GET /api/admin/reports
-
+// ── GET /api/admin/reports ────────────────────────────────────
 exports.getAdminReports = async (req, res) => {
   try {
     const { date_from, date_to } = req.query;
@@ -217,31 +244,29 @@ exports.getAdminReports = async (req, res) => {
       }
     }
 
-    // 🔹 USER STATS
     const usersStats = await User.aggregate([
       { $match: dateFilter },
       {
         $facet: {
-          totalUsers: [{ $count: "count" }],
+          totalUsers:   [{ $count: "count" }],
           statusCounts: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
-          roleCounts: [{ $group: { _id: { $toLower: "$role" }, count: { $sum: 1 } } }]
-        }
-      }
+          roleCounts:   [{ $group: { _id: { $toLower: "$role" }, count: { $sum: 1 } } }],
+        },
+      },
     ]);
 
     const stats = usersStats[0] || {};
     const formattedUserStats = {
-      totalUsers: stats.totalUsers?.[0]?.count || 0,
-      activeUsers: stats.statusCounts?.find(s => s._id === "ACTIVE")?.count || 0,
-      suspendedUsers: stats.statusCounts?.find(s => s._id === "SUSPENDED")?.count || 0,
+      totalUsers:     stats.totalUsers?.[0]?.count || 0,
+      activeUsers:    stats.statusCounts?.find(s => s._id === "active")?.count    || 0,
+      suspendedUsers: stats.statusCounts?.find(s => s._id === "suspended")?.count || 0,
       roles: {
         volunteers: stats.roleCounts?.find(r => r._id === "volunteer")?.count || 0,
-        ngo: stats.roleCounts?.find(r => r._id === "ngo")?.count || 0,
-        admin: stats.roleCounts?.find(r => r._id === "admin")?.count || 0,
-      }
+        ngo:        stats.roleCounts?.find(r => r._id === "ngo")?.count        || 0,
+        admin:      stats.roleCounts?.find(r => r._id === "admin")?.count      || 0,
+      },
     };
 
-    // 🔹 OPPORTUNITY STATS
     const opportunitiesStats = await Opportunity.aggregate([
       { $match: dateFilter },
       {
@@ -249,75 +274,66 @@ exports.getAdminReports = async (req, res) => {
           totalOpportunities: [{ $count: "count" }],
           byLocation: [
             { $group: { _id: "$location", count: { $sum: 1 } } },
-            { $sort: { count: -1 } }
+            { $sort: { count: -1 } },
           ],
           byNGO: [
-            { $group: { _id: "$createdBy", count: { $sum: 1 } } },
-            { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
-            { $unwind: "$ngoDetails" },
-            { $project: { name: "$ngoDetails.name", count: 1 } }
-          ]
-        }
-      }
+  { $group: { _id: "$createdBy", count: { $sum: 1 } } },
+  { $sort: { count: -1 } },   
+  { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
+  { $unwind: "$ngoDetails" },
+  { $project: { name: "$ngoDetails.name", count: 1 } }
+],
+        },
+      },
     ]);
 
     const opStats = opportunitiesStats[0] || {};
-    const formattedOpportunityStats = {
-      totalOpportunities: opStats.totalOpportunities?.[0]?.count || 0,
-      opportunitiesByLocation: opStats.byLocation || [],
-      opportunitiesByNGO: opStats.byNGO || []
-    };
 
-    // 🔹 MESSAGE STATS
-    const messagesStats = await Message.aggregate([
-      { $match: dateFilter },
-      {
-        $facet: {
-          totalMessages: [{ $count: "count" }],
-          topActiveVolunteers: [
-            { $group: { _id: "$sender_id", count: { $sum: 1 } } },
-            { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "userDetails" } },
-            { $unwind: "$userDetails" },
-            { $match: { "userDetails.role": "volunteer" } },
-            { $project: { name: "$userDetails.name", count: 1 } },
-            { $sort: { count: -1 } },
-            { $limit: 5 }
-          ]
-        }
-      }
+    const volunteerParticipation = await Opportunity.aggregate([
+      { $match: { ...dateFilter, "applicants.0": { $exists: true } } },
+      { $unwind: "$applicants" },
+      { $group: { _id: "$applicants.user", applicationCount: { $sum: 1 } } },
+      { $sort: { applicationCount: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "userDetails" } },
+      { $unwind: "$userDetails" },
+      { $project: { name: "$userDetails.name", count: "$applicationCount" } },
     ]);
 
-    const mgStats = messagesStats[0] || {};
-    const formattedMessageStats = {
-      totalMessages: mgStats.totalMessages?.[0]?.count || 0,
-      topActiveVolunteers: mgStats.topActiveVolunteers || [],
-    };
+    const messagesStats = await Message.aggregate([
+      { $match: dateFilter },
+      { $facet: { totalMessages: [{ $count: "count" }] } },
+    ]);
 
     res.status(200).json({
       success: true,
       reports: {
         users: formattedUserStats,
-        opportunities: formattedOpportunityStats,
-        messages: formattedMessageStats
-      }
+        opportunities: {
+          totalOpportunities:      opStats.totalOpportunities?.[0]?.count || 0,
+          opportunitiesByLocation: opStats.byLocation || [],
+          opportunitiesByNGO:      opStats.byNGO      || [],
+        },
+        messages: {
+          totalMessages:       messagesStats[0]?.totalMessages?.[0]?.count || 0,
+          topActiveVolunteers: volunteerParticipation,
+        },
+      },
     });
-
   } catch (error) {
     console.error("Admin reports error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
- 
 
 // ── GET /api/admin/logs ───────────────────────────────────────
-// main's AuditLog model (replaces hardcoded sample data)
 exports.getAdminLogs = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page  = parseInt(req.query.page)  || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const skip  = (page - 1) * limit;
 
-    const logs = await AuditLog.find()
+    const logs  = await AuditLog.find()
       .populate("adminId", "name email")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -332,8 +348,6 @@ exports.getAdminLogs = async (req, res) => {
     });
   } catch (error) {
     console.error("Admin logs error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
-
-
