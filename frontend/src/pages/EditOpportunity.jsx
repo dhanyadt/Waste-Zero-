@@ -107,16 +107,9 @@ const EditOpportunity = () => {
     }
   };
 
-  const darkBg = {
-    backgroundImage:[
-      "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-      "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
-      "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-    ].join(", "),
-  };
 
   if (authLoading || isFetching) return (
-    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font }}>
       <Sidebar />
       <main style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
         <p style={{ color:"rgba(255,255,255,.4)", fontSize:14 }}>Loading opportunity…</p>
@@ -125,7 +118,7 @@ const EditOpportunity = () => {
   );
 
   if (notFound) return (
-    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font }}>
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px" }}>
         <div style={{ borderRadius:18, background:"#fff", border:`1px solid ${T.bSand}`, padding:"48px 32px", maxWidth:500, textAlign:"center" }}>
@@ -141,7 +134,7 @@ const EditOpportunity = () => {
   );
 
   return (
-    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, ...darkBg }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font }}>
       <style>{css}</style>
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto" }}>

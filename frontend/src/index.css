@@ -1,6 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    margin:0;
+    padding:0;
+  }
+}
+
+.main-bg {
+  min-height: 100vh;
+  background-attachment: fixed;
+  background-image: 
+    radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%),
+    radial-gradient(ellipse at 55% 35%, rgba(67,160,71,.08) 0%, transparent 50%),
+    linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%) !important;
+}
 

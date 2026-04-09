@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { getAllOpportunitiesForNgo, deleteOpportunity } from "../services/api";
 import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2, MessageSquare, Users } from "lucide-react";
 import { getOpportunityApplicants } from "../services/api";
@@ -107,6 +108,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, title, isDeleting, darkMode }
 
 const NgoDashboard = () => {
   const { user, loading: authLoading } = useAuth();
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,12 +117,9 @@ const NgoDashboard = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [oppToDelete, setOppToDelete] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
   const [matches, setMatches] = useState({});
   const [conversations, setConversations] = useState([]);
   const [convoLoading, setConvoLoading] = useState(true);
-
-  const toggleTheme = () => setDarkMode(!darkMode);
 
   // ✅ Aggregate top volunteers across all opportunities, deduplicated by volunteer _id
   const topVolunteers = Object.values(matches)
@@ -224,24 +224,11 @@ const NgoDashboard = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      background: darkMode
-        ? "#1a2e1a"
-        : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
       color: darkMode ? "#eee" : "#000"
     }}>
       <style>{css}</style>
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
-
-        <button onClick={toggleTheme} style={{
-          position:"absolute", top:20, right:20,
-          padding:"8px 14px", borderRadius:12, border:"none",
-          background: darkMode ? "#eee" : "#333",
-          color: darkMode ? "#333" : "#fff",
-          cursor:"pointer", fontWeight:600, fontSize:12,
-        }}>
-          {darkMode ? "Light Mode" : "Dark Mode"}
-        </button>
 
         {/* Header */}
         <div style={{ marginBottom:32 }}>

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
+import ThemeToggle from "../ThemeToggle";
 
 const font = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
@@ -196,6 +197,7 @@ const AdminSidebar = () => {
 
       {/* Logout */}
       <div style={S.bottomSection}>
+        <ThemeToggle />
         <button
           style={S.logoutBtn}
           onClick={() => { logout(); navigate("/"); }}

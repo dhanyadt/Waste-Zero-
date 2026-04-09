@@ -224,7 +224,7 @@ const Messages = () => {
         .msg-convo-info { flex: 1; overflow: hidden; }
         .msg-convo-name { font-size: 14px; font-weight: 600; color: #e8f5e9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .msg-convo-preview { font-size: 12px; color: rgba(255,255,255,0.38); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .msg-chat { flex: 1; display: flex; flex-direction: column; background: #0d1f0e; }
+        .msg-chat { flex: 1; display: flex; flex-direction: column; background: transparent; }
         .msg-chat-header { padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.015); backdrop-filter: blur(10px); }
         .msg-chat-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #388e3c, #1b5e20); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #a5d6a7; border: 1.5px solid rgba(67,160,71,0.35); }
         .msg-chat-header-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #e8f5e9; }

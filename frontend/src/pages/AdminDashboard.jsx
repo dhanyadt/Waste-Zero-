@@ -3,6 +3,7 @@ import { Users, Users2, Target, Loader2, Clock, Shield, ShieldCheck, Sun, Moon, 
 import AdminSidebar from "../components/layout/AdminSidebar";
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 const T = {
   gDeep:"#1b5e20", gDark:"#2e7d32", gMid:"#43a047", gLight:"#81c784",
@@ -110,7 +111,8 @@ const AdminDashboard = () => {
   const [logs, setLogs]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState("");
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
   const navigate = useNavigate();
 
   const [topNgos, setTopNgos]             = useState([]);
@@ -173,25 +175,13 @@ const AdminDashboard = () => {
     { label:"Opportunities", value: stats.totalOpportunities || 0, icon:Target, accent:"#eab308" },
   ];
 
-  const bg = darkMode ? "#1a1a1a" : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)";
 
   return (
-    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, background:bg }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font }}>
       <style>{css}</style>
       <AdminSidebar />
 
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
-
-        <button onClick={() => setDarkMode(d => !d)} style={{
-          position:"absolute", top:24, right:24,
-          display:"flex", alignItems:"center", gap:6,
-          padding:"8px 16px", borderRadius:12, border:"none",
-          background: darkMode ? "rgba(255,255,255,.1)" : "#fff",
-          color: darkMode ? "#eee" : "#333", fontWeight:600, fontSize:13,
-          cursor:"pointer", boxShadow:"0 2px 10px rgba(0,0,0,.2)",
-        }}>
-          {darkMode ? <Sun size={16}/> : <Moon size={16}/>} {darkMode ? "Light" : "Dark"}
-        </button>
 
         {/*  Header — solid white title always, no gradient that disappears in dark mode */}
         <div style={{ marginBottom:36, display:"flex", alignItems:"center", gap:16 }}>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAllOpportunities, applyToOpportunity, getMyApplications } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import Sidebar from "../components/layout/Sidebar";
 import { MapPin, Clock, Building2, Search, CheckCircle2, X } from "lucide-react";
 
@@ -125,7 +126,7 @@ const Toast = ({ msg, type, onClose }) => (
   </div>
 );
 
-const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
+const ApplyModal = ({ isOpen, onClose, onSubmit, opp, darkMode }) => {
   const [formData, setFormData] = useState({ name: '', location: '', skills: '' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -163,15 +164,15 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
       padding:'20px', backdropFilter:'blur(6px)',
     }}>
       <div style={{
-        background:'#fff', borderRadius:20, padding:'32px', width:'100%', maxWidth:420,
+        background: darkMode ? "#1e2d1e" : "#fff", borderRadius:20, padding:'32px', width:'100%', maxWidth:420,
         boxShadow:'0 20px 60px rgba(0,0,0,.3)', maxHeight:'90vh', overflowY:'auto',
-        border:'1px solid rgba(0,0,0,0.06)',
+        border: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.06)',
       }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
-          <h3 style={{ margin:0, fontSize:20, fontFamily:serif, fontWeight:800, color:T.bDark }}>
+          <h3 style={{ margin:0, fontSize:20, fontFamily:serif, fontWeight:800, color: darkMode ? "#e8f5e9" : T.bDark }}>
             Apply to "{opp.title}"
           </h3>
-          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', padding:4, opacity:0.5, color:T.bDark }}>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', padding:4, opacity:0.5, color: darkMode ? "#e8f5e9" : T.bDark }}>
             <X size={20} />
           </button>
         </div>
@@ -192,9 +193,9 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
                 placeholder={placeholder}
                 style={{
                   width:'100%', padding:'11px 14px', borderRadius:10,
-                  border:`1px solid ${T.bSand}`,
-                  background:'#fafafa',
-                  color:T.textDark, fontSize:14, fontFamily:font,
+                  border: darkMode ? '1px solid #444' : `1px solid ${T.bSand}`,
+                  background: darkMode ? '#2a2a2a' : '#fafafa',
+                  color: darkMode ? '#e8f5e9' : T.textDark, fontSize:14, fontFamily:font,
                   outline:'none',
                 }}
               />
@@ -203,7 +204,7 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
           ))}
 
           <div style={{ marginBottom:24 }}>
-            <label style={{ display:'block', fontSize:13, fontWeight:600, color:T.textSoft, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.8px' }}>
+            <label style={{ display:'block', fontSize:13, fontWeight:600, color: darkMode ? "rgba(255,255,255,0.6)" : T.textSoft, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.8px' }}>
               Skills (comma-separated) *
             </label>
             <textarea
@@ -213,9 +214,9 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp }) => {
               placeholder="e.g. Web Development, Community Outreach"
               style={{
                 width:'100%', padding:'11px 14px', borderRadius:10,
-                border:`1px solid ${T.bSand}`,
-                background:'#fafafa',
-                color:T.textDark, fontSize:14, fontFamily:font, resize:'vertical',
+                border: darkMode ? '1px solid #444' : `1px solid ${T.bSand}`,
+                background: darkMode ? '#2a2a2a' : '#fafafa',
+                color: darkMode ? '#e8f5e9' : T.textDark, fontSize:14, fontFamily:font, resize:'vertical',
                 outline:'none',
               }}
             />
@@ -257,7 +258,8 @@ const Opportunities = () => {
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
   const [applyModal, setApplyModal] = useState({ isOpen: false, selectedOpp: null });
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
 
   const cardRefs = useRef({});
   const isNgo = user?.role?.toLowerCase() === "ngo";
@@ -352,9 +354,6 @@ const Opportunities = () => {
       display:"flex",
       minHeight:"100vh",
       fontFamily:font,
-      background: darkMode
-        ? "#080f08"
-        : "linear-gradient(160deg, #0d1f0e 0%, #0f1a0f 50%, #111c0e 100%)",
     }}>
       <style>{css}</style>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
@@ -364,6 +363,7 @@ const Opportunities = () => {
           onClose={closeApplyModal}
           onSubmit={handleApply}
           opp={applyModal.selectedOpp}
+          darkMode={darkMode}
         />
       )}
       <Sidebar />
@@ -380,17 +380,6 @@ const Opportunities = () => {
               Find ways to make a difference in your community
             </p>
           </div>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            style={{
-              padding:"8px 16px", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)",
-              background:"rgba(255,255,255,0.06)", cursor:"pointer",
-              color:"rgba(255,255,255,0.7)", fontWeight:600, fontSize:12,
-              fontFamily:font, transition:"all .2s",
-            }}
-          >
-            {darkMode ? "Light Mode" : "Dark Mode"}
-          </button>
         </div>
 
         {/* SEARCH */}

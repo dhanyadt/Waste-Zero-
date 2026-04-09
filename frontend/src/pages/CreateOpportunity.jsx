@@ -87,8 +87,7 @@ const CreateOpportunity = () => {
   };
 
   if (authLoading) return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", fontFamily:font,
-      background:"linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)" }}>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", fontFamily:font }}>
       <p style={{ color:"rgba(255,255,255,.4)" }}>Loading…</p>
     </div>
   );
@@ -96,11 +95,6 @@ const CreateOpportunity = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      backgroundImage:[
-        "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
-        "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      ].join(", "),
     }}>
       <style>{css}</style>
       <Sidebar />

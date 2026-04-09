@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 const T = {
   gDeep:  "#1b5e20",
@@ -27,13 +28,6 @@ const S = {
     minHeight: "100vh",
     fontFamily: font,
     padding: "40px 24px",
-    backgroundColor: "#162516",
-    backgroundImage: [
-      "radial-gradient(ellipse at 15% 85%, rgba(67,160,71,.22) 0%, transparent 50%)",
-      "radial-gradient(ellipse at 85% 15%, rgba(93,64,55,.35) 0%, transparent 50%)",
-      "radial-gradient(ellipse at 50% 50%, rgba(27,94,32,.4) 0%, transparent 70%)",
-      "linear-gradient(135deg, #1a2e1a 0%, #1f1a0e 50%, #2a1a0a 100%)",
-    ].join(", "),
   },
 
   container: { maxWidth: 740, margin: "0 auto" },
@@ -249,14 +243,14 @@ const hoverOff = (e) => { e.currentTarget.style.opacity = "1";   e.currentTarget
 
 const Profile = () => {
   const { user, updateUser, loading } = useAuth();
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
   const [activeTab, setActiveTab] = useState("profile");
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({ name: "", skills: "", location: "", bio: "" });
   const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passwordMessage, setPasswordMessage] = useState({ text: "", type: "" });
   const [showPasswords, setShowPasswords] = useState({ currentPassword: false, newPassword: false, confirmPassword: false });
-
-  const [darkMode, setDarkMode] = useState(false);
 
   const toggleShow = (field) => setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
 
@@ -338,32 +332,10 @@ const Profile = () => {
   };
 
   return (
-    <div style={{
-      ...S.page,
-      ...(darkMode && { background: "#1a2e1a", backgroundImage: "none" }),
-    }}>
+    <div style={S.page}>
       <div style={S.container}>
         <h1 style={S.pageTitle}>My Profile</h1>
         <p style={S.pageSub}>Manage your account information and settings</p>
-
-        {/* Dark/Light Mode Toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          style={{
-            padding: "8px 14px",
-            borderRadius: "12px",
-            border: "none",
-            cursor: "pointer",
-            background: darkMode ? "#eee" : "#333",
-            color: darkMode ? "#333" : "#fff",
-            fontWeight: 600,
-            fontSize: "12px",
-            float: "right",
-            marginBottom: "16px",
-          }}
-        >
-          {darkMode ? "Light Mode" : "Dark Mode"}
-        </button>
 
         {/* Tabs */}
         <div style={S.tabs}>

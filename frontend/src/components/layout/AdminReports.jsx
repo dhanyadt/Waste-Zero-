@@ -3,6 +3,7 @@ import AdminSidebar from "./AdminSidebar";
 import API from "../../services/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { TrendingUp, Download, RotateCcw, FileText } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 
 const T = {
   gDark:"#2e7d32", gMid:"#43a047", gPale:"#e8f5e9", gSage:"#a5c8a0",
@@ -25,7 +26,8 @@ const AdminReports = () => {
   const [dateTo, setDateTo]     = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -198,22 +200,11 @@ const AdminReports = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      background: darkMode ? "#1a1a1a" : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
     }}>
       <style>{css}</style>
       <AdminSidebar />
 
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
-
-        <button onClick={() => setDarkMode(d => !d)} style={{
-          position:"absolute", top:24, right:24, zIndex:100,
-          padding:"8px 16px", borderRadius:12, border:"none",
-          background: darkMode ? "rgba(255,255,255,.1)" : "#fff",
-          color: darkMode ? "#eee" : "#333", fontWeight:600, cursor:"pointer",
-          boxShadow:"0 4px 20px rgba(0,0,0,.2)",
-        }}>
-          {darkMode ? " Light" : " Dark"}
-        </button>
 
         {/* Header — title color works in both light and dark mode */}
         <div style={{ marginBottom:32 }}>

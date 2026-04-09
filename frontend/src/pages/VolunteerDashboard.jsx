@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 // ✅ FIXED IMPORT
 import { getAllOpportunities, getMyApplications } from "../services/api";
@@ -60,12 +61,13 @@ const OppStatusBadge = ({ status, darkMode }) => {
 
 const VolunteerDashboard = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
   const [matches, setMatches] = useState([]);
   
   const fetchData = async () => {
@@ -122,28 +124,10 @@ const VolunteerDashboard = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      backgroundImage: darkMode ? "#111" : [
-        "radial-gradient(ellipse at 0% 0%, rgba(27,94,32,.25) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 100% 100%, rgba(62,39,35,.22) 0%, transparent 45%)",
-        "radial-gradient(ellipse at 55% 35%, rgba(67,160,71,.08) 0%, transparent 50%)",
-        "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
-      ].join(", "),
     }}>
       <style>{css}</style>
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
-
-        {/* Dark/Light toggle */}
-        <button onClick={() => setDarkMode(!darkMode)} style={{
-          position:"absolute", top:20, right:20,
-          display:"flex", alignItems:"center", gap:6,
-          padding:"6px 12px", borderRadius:8, border:"none",
-          background: darkMode ? "#1a2e1a" : "#f5f5f5",
-          color: darkMode ? "#fff" : "#000", fontWeight:600, cursor:"pointer",
-          zIndex:100,
-        }}>
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />} {darkMode ? "Light Mode" : "Dark Mode"}
-        </button>
 
         {/* Header */}
         <div style={{ marginBottom:32 }}>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "./AdminSidebar";
 import API from "../../services/api";
 import { Clock, Shield, RotateCcw, Search } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 
 const T = {
   gDark:"#2e7d32", gMid:"#43a047", gPale:"#e8f5e9", gSage:"#a5c8a0",
@@ -46,7 +47,8 @@ const AdminLogs = () => {
   const [loading, setLoading]       = useState(false);
   const [search, setSearch]         = useState("");
   const [actionFilter, setActionFilter] = useState("");
-  const [darkMode, setDarkMode]     = useState(false);
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
 
   const fetchLogs = useCallback(async (page = 1) => {
     setLoading(true);
@@ -77,22 +79,11 @@ const AdminLogs = () => {
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
-      background: darkMode ? "#1a1a1a" : "linear-gradient(160deg, #1a2e1a 0%, #1f1a0e 55%, #2a1a0a 100%)",
     }}>
       <style>{css}</style>
       <AdminSidebar />
 
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
-
-        <button onClick={() => setDarkMode(d => !d)} style={{
-          position:"absolute", top:24, right:24, zIndex:100,
-          padding:"8px 16px", borderRadius:12, border:"none",
-          background: darkMode ? "rgba(255,255,255,.1)" : "#fff",
-          color: darkMode ? "#eee" : "#333", fontWeight:600, cursor:"pointer",
-          boxShadow:"0 4px 20px rgba(0,0,0,.2)",
-        }}>
-          {darkMode ? " Light" : " Dark"}
-        </button>
 
         {/* Header */}
         <div style={{ marginBottom:32 }}>

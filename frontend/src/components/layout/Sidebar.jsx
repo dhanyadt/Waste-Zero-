@@ -10,6 +10,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import ProfileUploadModal from "../ui/ProfileUploadModal";
+import ThemeToggle from "../ThemeToggle";
 
 const T = {
   gDeep: "#1b5e20", gDark: "#2e7d32", gMid: "#43a047", gLight: "#81c784",
@@ -206,6 +207,7 @@ const Sidebar = () => {
 
       {/* Logout */}
       <div style={S.bottomSection}>
+        <ThemeToggle />
         <button style={S.logoutBtn}
           onClick={() => { logout(); navigate("/"); }}
           onMouseEnter={(e) => {

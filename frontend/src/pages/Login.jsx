@@ -54,8 +54,10 @@ const Login = () => {
         return;
       }
 
-      // Clear old session completely
+      // Clear old session but keep theme preference
+      const currentTheme = localStorage.getItem("theme");
       localStorage.clear();
+      if (currentTheme) localStorage.setItem("theme", currentTheme);
 
       // Save new session
       localStorage.setItem("token", data.token);
