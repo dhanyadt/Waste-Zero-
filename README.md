@@ -67,8 +67,9 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/your-username/wastezero.git
-cd wastezero
+git clone https://github.com/your-username/waste-zero-feb-team01.git
+cd waste-zero-feb-team01
+
 ```
 
 ### 2. Install dependencies
