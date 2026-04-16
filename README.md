@@ -49,11 +49,11 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 ## 📁 Project Structure
 
 ```
-/frontend   → React application
-/backend    → Node.js + Express server
-/routes     → API routes
-/controllers → Business logic
-/models     → MongoDB schemas
+- /frontend   → React application
+- /backend    → Node.js + Express server
+- /routes     → API routes
+- /controllers → Business logic
+- /models     → MongoDB schemas
 ```
 
 
