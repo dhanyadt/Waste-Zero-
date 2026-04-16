@@ -86,7 +86,7 @@ npm install
 
 ```
 cd backend
-npm start
+npm node server.js
 
 cd ../frontend
 npm run dev
