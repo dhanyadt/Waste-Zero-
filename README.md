@@ -26,7 +26,6 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 **Real-Time:** Socket.IO
 **Tools:** Git, Postman
 
----
 
 ## ⚙️ How It Works
 
@@ -36,7 +35,6 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 4. Real-time updates are handled using WebSockets
 5. Admin manages users and platform activities
 
----
 
 ## 🔌 WebSocket Integration
 
@@ -47,7 +45,6 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
   * Application status updates
 * Uses **room-based communication** for targeted messaging
 
----
 
 ## 📁 Project Structure
 
@@ -59,7 +56,6 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 /models     → MongoDB schemas
 ```
 
----
 
 ## 📦 Installation
 
