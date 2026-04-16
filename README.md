@@ -5,7 +5,7 @@
 WasteZero is a full-stack web application designed to connect NGOs with volunteers for waste management and sustainability initiatives.
 The platform enables NGOs to create opportunities and allows volunteers to discover, apply, and participate in activities like clean-up drives, recycling programs, and awareness campaigns.
 
----
+
 
 ## 🚀 Features
 
@@ -16,7 +16,6 @@ The platform enables NGOs to create opportunities and allows volunteers to disco
 * 📊 **Dashboards** for NGOs and Volunteers
 * 🌍 **Location-based Opportunities** with structured data
 
----
 
 ## 🛠️ Tech Stack
 
