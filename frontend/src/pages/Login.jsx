@@ -34,14 +34,15 @@ const Login = () => {
       console.log("Sending login request:", formData);
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-        }),
-      });
+  method: "POST",   
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    email: formData.email.trim().toLowerCase(),
+    password: formData.password,
+  }),
+});
 
       const data = await response.json();
 
