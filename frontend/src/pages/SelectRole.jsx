@@ -49,7 +49,7 @@ const SelectRole = () => {
 
     try {
       const token = sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/users/set-role", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/set-role`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

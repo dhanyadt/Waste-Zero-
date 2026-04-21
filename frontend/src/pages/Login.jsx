@@ -33,8 +33,7 @@ const Login = () => {
     try {
       console.log("Sending login request:", formData);
 
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -86,7 +85,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
   return (

@@ -36,7 +36,7 @@ const ProfileUploadModal = ({ isOpen, onClose }) => {
       formData.append("profilePicture", blob, "profile-picture.jpg");
       
       // Upload to backend
-      const uploadResponse = await fetch("http://localhost:5000/api/upload/profile-picture", {
+      const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-picture`, {
         method: "POST",
         body: formData
       });

@@ -279,7 +279,7 @@ const Profile = () => {
   const handleSave = async () => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/auth/me", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -304,7 +304,7 @@ const Profile = () => {
       return setPasswordMessage({ text: "New passwords do not match", type: "error" });
     try {
       const token = sessionStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/auth/change-password", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currentPassword, newPassword }),
