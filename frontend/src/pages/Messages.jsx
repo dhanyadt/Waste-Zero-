@@ -124,7 +124,7 @@ const Messages = () => {
   const loadMessages = async (userId) => {
     try {
       const res = await API.get(`/messages/${userId}`);
-      const currentUser = JSON.parse(localStorage.getItem("user"));
+      const currentUser = JSON.parse(sessionStorage.getItem("user"));
       const currentUserId = currentUser?._id || currentUser?.id;
 
       const msgs = (res.data.messages || [])
@@ -153,7 +153,7 @@ const Messages = () => {
 
   const sendMessage = async () => {
     if (!text || !selectedUser) return;
-    const currentUser = JSON.parse(localStorage.getItem("user"));
+    const currentUser = JSON.parse(sessionStorage.getItem("user"));
     const tempMessage = {
       _id: Date.now(),
       content: text,

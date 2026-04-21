@@ -75,7 +75,7 @@ exports.getAllUsers = async (req, res) => {
 
     let query = {};
     if (role)   query.role   = role.toLowerCase();
-    if (status) query.status = status.toLowerCase(); // ✅ always lowercase to match schema enum
+    if (status) query.status = status.toLowerCase();
 
     const users = await User.find(query)
       .select("-password")
@@ -104,7 +104,6 @@ exports.updateUserStatus = async (req, res) => {
     if (!isValidId(id))
       return res.status(400).json({ success: false, message: "Invalid User ID" });
 
-    //  User schema enum is "active" | "suspended"
     const normalizedStatus = (status || "").toLowerCase().trim();
     if (!["active", "suspended"].includes(normalizedStatus))
       return res.status(400).json({
@@ -119,7 +118,6 @@ exports.updateUserStatus = async (req, res) => {
     if (id === adminId.toString())
       return res.status(400).json({ success: false, message: "Admin cannot suspend themselves" });
 
-    
     const updateResult = await User.updateOne(
       { _id: id },
       { $set: { status: normalizedStatus } }
@@ -245,7 +243,6 @@ exports.getAdminReports = async (req, res) => {
     }
 
     const usersStats = await User.aggregate([
-      { $match: dateFilter },
       {
         $facet: {
           totalUsers:   [{ $count: "count" }],
@@ -256,10 +253,14 @@ exports.getAdminReports = async (req, res) => {
     ]);
 
     const stats = usersStats[0] || {};
+
+    const totalCount     = stats.totalUsers?.[0]?.count || 0;
+    const suspendedCount = stats.statusCounts?.find(s => s._id === "suspended")?.count || 0;
+
     const formattedUserStats = {
-      totalUsers:     stats.totalUsers?.[0]?.count || 0,
-      activeUsers:    stats.statusCounts?.find(s => s._id === "active")?.count    || 0,
-      suspendedUsers: stats.statusCounts?.find(s => s._id === "suspended")?.count || 0,
+      totalUsers:     totalCount,
+      suspendedUsers: suspendedCount,
+      activeUsers:    totalCount - suspendedCount,
       roles: {
         volunteers: stats.roleCounts?.find(r => r._id === "volunteer")?.count || 0,
         ngo:        stats.roleCounts?.find(r => r._id === "ngo")?.count        || 0,
@@ -277,12 +278,12 @@ exports.getAdminReports = async (req, res) => {
             { $sort: { count: -1 } },
           ],
           byNGO: [
-  { $group: { _id: "$createdBy", count: { $sum: 1 } } },
-  { $sort: { count: -1 } },   
-  { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
-  { $unwind: "$ngoDetails" },
-  { $project: { name: "$ngoDetails.name", count: 1 } }
-],
+            { $group: { _id: "$createdBy", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "ngoDetails" } },
+            { $unwind: "$ngoDetails" },
+            { $project: { name: "$ngoDetails.name", count: 1 } },
+          ],
         },
       },
     ]);
@@ -329,25 +330,60 @@ exports.getAdminReports = async (req, res) => {
 // ── GET /api/admin/logs ───────────────────────────────────────
 exports.getAdminLogs = async (req, res) => {
   try {
-    const page  = parseInt(req.query.page)  || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip  = (page - 1) * limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
+    const { search, action } = req.query;
 
-    const logs  = await AuditLog.find()
-      .populate("adminId", "name email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    let query = {};
 
-    const total = await AuditLog.countDocuments();
+    // Filter by action if selected
+    if (action) query.action = action.toUpperCase();
+
+    // Search ONLY by admin name/email — not by details/targetType
+    // This ensures "dinesh" only returns logs where the ADMIN who acted is dinesh,
+    // not logs where the target user happens to be named dinesh.
+    if (search) {
+      const matchingAdmins = await User.find({
+        $or: [
+          { name:  { $regex: search.trim(), $options: "i" } },
+          { email: { $regex: search.trim(), $options: "i" } },
+        ],
+      }).select("_id");
+
+      const adminIds = matchingAdmins.map(a => a._id);
+
+      // If no admins matched the search term, return empty results immediately
+      if (adminIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          logs: [],
+          pagination: { current: page, pages: 0, total: 0 },
+        });
+      }
+
+      query.adminId = { $in: adminIds };
+    }
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(query)
+        .populate("adminId", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      AuditLog.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
       logs,
-      pagination: { current: page, pages: Math.ceil(total / limit), total },
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total,
+      },
     });
   } catch (error) {
-    console.error("Admin logs error:", error);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };

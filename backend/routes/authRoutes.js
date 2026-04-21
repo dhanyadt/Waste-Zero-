@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const passport = require("passport");
+// const passport = require("passport");
 const generateToken = require("../utils/generateToken");
 
 const {
@@ -23,7 +23,7 @@ router.put("/change-password", authMiddleware, changePassword);
 
 // ================= GOOGLE AUTH =================
 
-// Step 1: Redirect to Google
+/* Step 1: Redirect to Google
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -53,6 +53,6 @@ router.get(
       `http://localhost:5173/auth/callback?token=${token}&requireRole=${requireRole}&user=${userData}`,
     );
   },
-);
+);  */
 
 module.exports = router;

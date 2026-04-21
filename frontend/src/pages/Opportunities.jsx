@@ -211,7 +211,7 @@ const ApplyModal = ({ isOpen, onClose, onSubmit, opp, darkMode }) => {
               rows={3}
               value={formData.skills}
               onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-              placeholder="e.g. Web Development, Community Outreach"
+              placeholder="e.g. Teamwork, Community Outreach"
               style={{
                 width:'100%', padding:'11px 14px', borderRadius:10,
                 border: darkMode ? '1px solid #444' : `1px solid ${T.bSand}`,

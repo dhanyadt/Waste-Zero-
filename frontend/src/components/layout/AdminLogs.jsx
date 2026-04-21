@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import AdminSidebar from "./AdminSidebar";
 import API from "../../services/api";
 import { Clock, Shield, RotateCcw, Search } from "lucide-react";
@@ -41,45 +41,62 @@ const ActionBadge = ({ action }) => {
 };
 
 const AdminLogs = () => {
-  const [logs, setLogs]             = useState([]);
-  const [pagination, setPagination] = useState({ current:1, pages:1, total:0 });
+  const [logs, setLogs]               = useState([]);
+  const [pagination, setPagination]   = useState({ current:1, pages:1, total:0 });
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading]       = useState(false);
-  const [search, setSearch]         = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [search, setSearch]           = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const { theme } = useTheme();
   const darkMode = theme === "dark";
 
-  const fetchLogs = useCallback(async (page = 1) => {
-    setLoading(true);
-    try {
-      const res = await API.get(`/admin/logs?page=${page}&limit=15`);
-      setLogs(res.data.logs || []);
-      setPagination(res.data.pagination || { current:1, pages:1, total:0 });
-    } catch (err) {
-      console.error("Logs fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Debounce ref — avoids firing on every keystroke
+  const debounceRef = useRef(null);
 
-  useEffect(() => { fetchLogs(currentPage); }, [currentPage, fetchLogs]);
+  const fetchLogs = useCallback(async (page = 1, searchTerm = "", action = "") => {
+  setLoading(true);
+  try {
+    // This creates the URL string: /admin/logs?page=1&search=dinesh&action=...
+    const params = new URLSearchParams({
+      page,
+      limit: 15,
+      search: searchTerm.trim(),
+      action: action
+    });
 
-  const filtered = logs.filter(log => {
-    if (actionFilter && (log.action || "").toUpperCase() !== actionFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const searchable = [log.adminId?.name, log.adminId?.email, log.details, log.action, log.targetType]
-        .map(v => (v || "").toLowerCase()).join(" ");
-      if (!searchable.includes(q)) return false;
-    }
-    return true;
-  });
+    const res = await API.get(`/admin/logs?${params.toString()}`);
+    setLogs(res.data.logs || []);
+    setPagination(res.data.pagination);
+  } catch (err) {
+    console.error("Fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+  // On page change — use current search & filter
+  useEffect(() => {
+    fetchLogs(currentPage, search, actionFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // When search or actionFilter changes — debounce, reset to page 1
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setCurrentPage(1);
+      fetchLogs(1, search, actionFilter);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [search, actionFilter, fetchLogs]);
+
+  const handleRefresh = () => {
+    setCurrentPage(1);
+    fetchLogs(1, search, actionFilter);
+  };
 
   return (
-    <div style={{
-      display:"flex", minHeight:"100vh", fontFamily:font,
-    }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font }}>
       <style>{css}</style>
       <AdminSidebar />
 
@@ -96,7 +113,6 @@ const AdminLogs = () => {
               <Clock size={24} color="#43a047" />
             </div>
             <div>
-              
               <h1 style={{ fontFamily:serif, fontSize:32, fontWeight:900, color:"#fff", margin:0 }}>
                 Admin Activity Logs
               </h1>
@@ -119,8 +135,10 @@ const AdminLogs = () => {
               <div style={{ fontSize:12, color: darkMode ? "#aaa" : T.textSoft, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}>
                 <Search size={14}/> Search
               </div>
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Admin name, details..."
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Admin name, email, details..."
                 style={{
                   width:"100%", padding:"10px 14px", borderRadius:10,
                   border:`1px solid ${darkMode ? "#555" : T.bSand}`,
@@ -132,19 +150,23 @@ const AdminLogs = () => {
             </div>
             <div style={{ minWidth:200 }}>
               <div style={{ fontSize:12, color: darkMode ? "#aaa" : T.textSoft, marginBottom:6 }}>Action type</div>
-              <select value={actionFilter} onChange={e => setActionFilter(e.target.value)} style={{
-                padding:"10px 14px", borderRadius:10,
-                border:`1px solid ${darkMode ? "#555" : T.bSand}`,
-                background: darkMode ? "#333" : "#f8fafc",
-                color: darkMode ? "#eee" : T.textDark, width:"100%", fontSize:14,
-              }}>
+              <select
+                value={actionFilter}
+                onChange={e => setActionFilter(e.target.value)}
+                style={{
+                  padding:"10px 14px", borderRadius:10,
+                  border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+                  background: darkMode ? "#333" : "#f8fafc",
+                  color: darkMode ? "#eee" : T.textDark, width:"100%", fontSize:14,
+                }}
+              >
                 <option value="">All actions</option>
                 <option value="USER_SUSPENDED">Suspended user</option>
                 <option value="USER_ACTIVATED">Activated user</option>
                 <option value="OPPORTUNITY_DELETED">Deleted opportunity</option>
               </select>
             </div>
-            <button onClick={() => fetchLogs(currentPage)} disabled={loading} style={{
+            <button onClick={handleRefresh} disabled={loading} style={{
               padding:"10px 20px", borderRadius:10, border:"none",
               background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
               color:"#fff", fontWeight:600, cursor: loading ? "wait" : "pointer",
@@ -162,7 +184,7 @@ const AdminLogs = () => {
             <Clock size={56} style={{ opacity:.4, display:"block", margin:"0 auto 16px" }}/>
             <p style={{ fontSize:17 }}>Loading logs...</p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : logs.length === 0 ? (
           <div style={{
             background: darkMode ? "#2a2a2a" : "#fff",
             borderRadius:20, padding:"60px", textAlign:"center",
@@ -173,7 +195,7 @@ const AdminLogs = () => {
           </div>
         ) : (
           <div style={{ display:"grid", gap:10 }}>
-            {filtered.map((log, i) => (
+            {logs.map((log, i) => (
               <div key={log._id} className="log-row" style={{
                 background: darkMode ? "#2a2a2a" : "#fff",
                 borderRadius:16, padding:"20px 24px",

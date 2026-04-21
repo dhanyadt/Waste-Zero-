@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const matchesPageActiveRef = useRef(false);
   const lastMatchRef = useRef(null);
   const lastMessageRef = useRef(null);
+  const lastNotificationRef = useRef(null);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -58,13 +59,14 @@ export const AuthProvider = ({ children }) => {
 
       const handleNewMessage = (data) => {
         if (!data) return;
-        const key = data._id || data.createdAt || JSON.stringify(data);
+        const key = data._id ? String(data._id) : `${data.sender_id}-${data.createdAt}`;
         if (lastMessageRef.current === key) return;
         lastMessageRef.current = key;
 
         const senderId = data.sender_id || data.senderId;
+        const senderName = data.senderName || "Someone";
 
-        // update global conversations list regardless of current page
+        // Update global conversations list
         setConversations((prev) => {
           const exists = prev.find((c) => String(c.user._id) === String(senderId));
           if (exists) {
@@ -74,19 +76,15 @@ export const AuthProvider = ({ children }) => {
                 : c
             );
           }
-          // New conversation — prepend
-          return [
-            {
-              user: { _id: senderId, name: data.senderName || "Volunteer" },
-              lastMessage: data.content,
-            },
-            ...prev,
-          ];
+          return [{ user: { _id: senderId, name: senderName }, lastMessage: data.content }, ...prev];
         });
 
-        // Bump badge only when not on messages page
-        if (messagesPageActiveRef.current) return;
-        setNotificationCount((prev) => Math.min(prev + 1, 50));
+        // 1. Show Pop-up (Toast) if not on the messages page
+        if (!messagesPageActiveRef.current) {
+          showToast(`New message from ${senderName}`, "info");
+          // 2. Increment Sidebar Badge
+          setNotificationCount((prev) => Math.min(prev + 1, 50));
+        }
       };
 
       const handleNewMatch = (match) => {
@@ -107,11 +105,8 @@ export const AuthProvider = ({ children }) => {
       socketInstance.on("newMatch", handleNewMatch);
       socketInstance.on("newNotification", (data) => {
         if (!data) return;
-        const key = JSON.stringify(data);
-        if (lastMessageRef.current === key) return;
-        lastMessageRef.current = key;
-        setNotificationCount((prev) => prev + 1);
-        showToast(data.message || "New notification", "success");
+        if (messagesPageActiveRef.current) return;
+        showToast(data.message || "New message received", "info");
       });
 
     } catch (err) {
@@ -120,7 +115,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
+    // UPDATED: Use sessionStorage to prevent cross-tab overriding
+    const savedToken = sessionStorage.getItem("token");
     if (!savedToken) { setLoading(false); return; }
 
     const fetchFreshUser = async () => {
@@ -130,15 +126,17 @@ export const AuthProvider = ({ children }) => {
         });
         const freshUser = res.data.user || res.data;
         setUser(freshUser);
-        localStorage.setItem("user", JSON.stringify(freshUser));
+        
+        // UPDATED: Save to sessionStorage
+        sessionStorage.setItem("user", JSON.stringify(freshUser));
+        
         initSocket(savedToken, freshUser?.id || freshUser?._id);
-        // load conversations globally as soon as user is confirmed
         fetchConversations();
       } catch (err) {
         console.error("Session restore failed:", err.message);
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        localStorage.removeItem("dashboard");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("dashboard");
         setUser(null);
       } finally {
         setLoading(false);
@@ -150,24 +148,24 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    const token = localStorage.getItem("token");
+    // UPDATED: Save to sessionStorage
+    sessionStorage.setItem("user", JSON.stringify(userData));
+    const token = sessionStorage.getItem("token");
     initSocket(token, userData?.id || userData?._id);
-    // load conversations on manual user update (e.g. after login)
     fetchConversations();
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("dashboard");
+    // UPDATED: Clear sessionStorage
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("dashboard");
     disconnectSocket();
     setSocket(null);
     window.__socketInitialized = false;
     setNotificationCount(0);
     setMatches([]);
-    // ✅ Clear conversations on logout
     setConversations([]);
     conversationsLoadedRef.current = false;
   };

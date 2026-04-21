@@ -1,7 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import { useTheme } from "../context/ThemeContext";
 
 const font  = "'DM Sans', sans-serif";
 const serif = "'Fraunces', serif";
@@ -32,7 +30,6 @@ const Blob = ({ style }) => (
 // ── nav ──
 const Nav = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 40);
@@ -40,17 +37,15 @@ const Nav = () => {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  const isDark = theme === "dark";
-
   return (
     <nav style={{
       position:"fixed", top:0, left:0, right:0, zIndex:100,
       padding:"0 48px",
       height:64,
       display:"flex", alignItems:"center", justifyContent:"space-between",
-      background: scrolled ? (isDark ? "rgba(10,20,10,.85)" : "rgba(255,255,255,.9)") : "transparent",
+      background: scrolled ? "rgba(10,20,10,.85)" : "transparent",
       backdropFilter: scrolled ? "blur(14px)" : "none",
-      borderBottom: scrolled ? (isDark ? "1px solid rgba(255,255,255,.06)" : "1px solid rgba(0,0,0,.08)") : "none",
+      borderBottom: scrolled ? "1px solid rgba(255,255,255,.06)" : "none",
       transition:"all .35s ease",
       fontFamily:font,
     }}>
@@ -67,33 +62,24 @@ const Nav = () => {
             <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
           </svg>
         </div>
-        <span style={{ fontFamily:serif, fontSize:18, fontWeight:800, color: isDark ? "#fff" : "#1b5e20", letterSpacing:"-.2px" }}>WasteZero</span>
+        <span style={{ fontFamily:serif, fontSize:18, fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>WasteZero</span>
       </div>
 
       {/* Nav links */}
       <div style={{ display:"flex", alignItems:"center", gap:32 }}>
         {[["How it Works","#how"], ["Impact","#impact"], ["About","#about"]].map(([label, href]) => (
           <a key={href} href={href} style={{
-            fontSize:14, fontWeight:500, color: isDark ? "rgba(255,255,255,.65)" : "rgba(0,30,0,.6)",
+            fontSize:14, fontWeight:500, color:"rgba(255,255,255,.65)",
             textDecoration:"none", transition:"color .2s",
           }}
-            onMouseEnter={e => e.target.style.color= isDark ? "#fff" : "#2e7d32"}
-            onMouseLeave={e => e.target.style.color= isDark ? "rgba(255,255,255,.65)" : "rgba(0,30,0,.6)"}
+            onMouseEnter={e => e.target.style.color="#fff"}
+            onMouseLeave={e => e.target.style.color="rgba(255,255,255,.65)"}
           >{label}</a>
         ))}
       </div>
 
-      {/* Right Section: CTA & Theme Toggle */}
+      {/* Right Section: CTA */}
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <ThemeToggle 
-          style={{ 
-            width: "auto", 
-            padding: "8px 16px",
-            background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
-            border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
-            color: isDark ? "rgba(255,255,255,.6)" : "rgba(0,30,0,.6)"
-          }} 
-        />
         <button onClick={() => navigate("/login")} style={{
           padding:"9px 22px", borderRadius:10, border:"1px solid rgba(67,160,71,.5)",
           background:"rgba(67,160,71,.12)", color:"#81c784",
@@ -176,8 +162,10 @@ const Hero = () => {
           display:"inline-flex", alignItems:"center", gap:8,
           padding:"6px 16px", borderRadius:99,
           marginBottom:28,
-        }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">
-          <span style={{ fontSize:13, fontWeight:600, letterSpacing:".3px" }} className="text-green-700 dark:text-green-300">
+          background:"rgba(67,160,71,.15)",
+          border:"1px solid rgba(67,160,71,.3)",
+        }}>
+          <span style={{ fontSize:13, fontWeight:600, letterSpacing:".3px", color:"#81c784" }}>
             Building sustainable communities
           </span>
         </div>
@@ -187,7 +175,8 @@ const Hero = () => {
           ...fade(120),
           fontFamily:serif, fontSize:"clamp(42px, 6vw, 72px)", fontWeight:900,
           lineHeight:1.06, letterSpacing:"-.03em", margin:"0 0 24px",
-        }} className="text-green-800 dark:text-green-200">
+          color:"#c8e6c9",
+        }}>
           Connecting{" "}
           <span style={{
             background:"linear-gradient(135deg, #66bb6a, #43a047, #2e7d32)",
@@ -201,23 +190,26 @@ const Hero = () => {
           ...fade(240),
           fontSize:"clamp(16px, 2vw, 19px)",
           lineHeight:1.7, margin:"0 auto 44px", maxWidth:560,
-        }} className="text-green-900 dark:text-green-100">
+          color:"#a5d6a7",
+        }}>
           WasteZero bridges the gap between organizations driving change
           and individuals ready to act — together building a cleaner, greener world.
         </p>
 
         {/* CTAs */}
         <div style={{ ...fade(360), display:"flex", flexWrap:"wrap", gap:12, justifyContent:"center" }}>
-          <button className="hero-btn bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white" onClick={() => navigate("/register?role=volunteer")} style={{
+          <button className="hero-btn" onClick={() => navigate("/register?role=volunteer")} style={{
             padding:"14px 28px", borderRadius:12,
+            background:"#43a047", color:"#fff",
             fontFamily:font, fontSize:15, fontWeight:600, border:"none",
             cursor:"pointer", display:"flex", alignItems:"center", gap:8,
           }}>
             Join as Volunteer
           </button>
-          <button className="hero-btn bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-white/10" onClick={() => navigate("/register?role=ngo")} style={{
+          <button className="hero-btn" onClick={() => navigate("/register?role=volunteer")} style={{
             padding:"14px 28px", borderRadius:12,
-            fontFamily:font, fontSize:15, fontWeight:600,
+            background:"#43a047", color:"#fff",
+            fontFamily:font, fontSize:15, fontWeight:600, border:"none",
             cursor:"pointer", display:"flex", alignItems:"center", gap:8,
           }}>
             Register NGO
@@ -235,12 +227,15 @@ const Hero = () => {
             { value:"1200+", label:"Opportunities" },
             { value:"40+",  label:"Cities" },
           ].map(({ value, label }) => (
-            <div key={label} className="stat-card bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800" style={{
+            <div key={label} className="stat-card" style={{
               padding:"18px 28px", borderRadius:16,
               minWidth:110,
+              background:"rgba(255,255,255,.05)",
+              backdropFilter:"blur(12px)",
+              border:"1px solid rgba(67,160,71,.2)",
             }}>
-              <div style={{ fontFamily:serif, fontSize:28, fontWeight:900, lineHeight:1 }} className="text-green-700 dark:text-green-300">{value}</div>
-              <div style={{ fontSize:12, marginTop:4, fontWeight:500, textTransform:"uppercase", letterSpacing:".6px" }} className="text-green-900 dark:text-green-100">{label}</div>
+              <div style={{ fontFamily:serif, fontSize:28, fontWeight:900, lineHeight:1, color:"#81c784" }}>{value}</div>
+              <div style={{ fontSize:12, marginTop:4, fontWeight:500, textTransform:"uppercase", letterSpacing:".6px", color:"#a5d6a7" }}>{label}</div>
             </div>
           ))}
         </div>
@@ -252,8 +247,8 @@ const Hero = () => {
         display:"flex", flexDirection:"column", alignItems:"center", gap:6, opacity:.4,
         animation:"float 2s ease-in-out infinite",
       }}>
-        <span style={{ fontSize:11, letterSpacing:"1px", textTransform:"uppercase" }} className="text-green-900 dark:text-white">Scroll</span>
-        <div style={{ width:1, height:32 }} className="bg-gradient-to-b from-green-900 dark:from-white to-transparent" />
+        <span style={{ fontSize:11, letterSpacing:"1px", textTransform:"uppercase", color:"#fff" }}>Scroll</span>
+        <div style={{ width:1, height:32, background:"linear-gradient(to bottom, #fff, transparent)" }} />
       </div>
     </section>
   );
@@ -280,27 +275,28 @@ const Why = () => {
               display:"inline-flex", alignItems:"center", gap:7,
               padding:"5px 14px", borderRadius:99,
               marginBottom:20,
-            }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">
-              <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px" }} className="text-green-700 dark:text-green-300">The Problem</span>
+              background:"rgba(67,160,71,.15)",
+              border:"1px solid rgba(67,160,71,.3)",
+            }}>
+              <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px", color:"#81c784" }}>The Problem</span>
             </div>
-            <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 20px", lineHeight:1.1 }} className="text-green-800 dark:text-green-200">
+            <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 20px", lineHeight:1.1, color:"#c8e6c9" }}>
               Waste is a crisis.<br/>
-              <span className="text-green-600 dark:text-[#66bb6a]">Coordination</span> is the gap.
+              <span style={{ color:"#66bb6a" }}>Coordination</span> is the gap.
             </h2>
-            <p style={{ fontSize:16, lineHeight:1.8, margin:"0 0 16px" }} className="text-green-900 dark:text-green-100">
+            <p style={{ fontSize:16, lineHeight:1.8, margin:"0 0 16px", color:"#a5d6a7" }}>
               Millions of tonnes of waste go unmanaged every year — not because people don't care, but because NGOs with the mission can't find volunteers with the time, and volunteers can't find the right organizations to support.
             </p>
-            <p style={{ fontSize:16, lineHeight:1.8 }} className="text-green-900 dark:text-green-100">
+            <p style={{ fontSize:16, lineHeight:1.8, color:"#a5d6a7" }}>
               WasteZero exists to close that gap. We match people to purpose, and turn intent into impact.
             </p>
           </div>
 
-          {/* Right — floating card stack with increased spacing */}
+          {/* Right — floating card stack */}
           <div className={`scroll-reveal ${inView ? "visible" : "hidden"}`} style={{ transitionDelay:"160ms", position:"relative", height:420 }}>
             {[
               {
                 top: 0, left: 40,
-                bg:"rgba(46,125,50,.15)", border:"rgba(67,160,71,.25)",
                 icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
@@ -310,7 +306,6 @@ const Why = () => {
               },
               {
                 top: 140, left: 0,
-                bg:"rgba(27,94,32,.2)", border:"rgba(67,160,71,.3)",
                 icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -320,7 +315,6 @@ const Why = () => {
               },
               {
                 top: 280, left: 60,
-                bg:"rgba(30,50,20,.25)", border:"rgba(67,160,71,.2)",
                 icon: (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/>
@@ -329,21 +323,26 @@ const Why = () => {
                 ),
                 text:"Recyclables lost to landfill", sub:"60% recyclable waste discarded",
               },
-            ].map(({ top, left, bg, border, icon, text, sub }, i) => (
-              <div key={i} className="bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800" style={{
+            ].map(({ top, left, icon, text, sub }, i) => (
+              <div key={i} style={{
                 position:"absolute", top, left,
                 width:300, padding:"18px 22px", borderRadius:16,
                 display:"flex", alignItems:"center", gap:14,
+                background:"rgba(255,255,255,.05)",
+                backdropFilter:"blur(12px)",
+                border:"1px solid rgba(67,160,71,.2)",
                 animation:`float ${3 + i * 0.6}s ease-in-out infinite`,
                 animationDelay:`${i * 0.4}s`,
               }}>
                 <div style={{
                   width:36, height:36, borderRadius:10, flexShrink:0,
                   display:"flex", alignItems:"center", justifyContent:"center",
-                }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">{icon}</div>
+                  background:"rgba(67,160,71,.15)",
+                  border:"1px solid rgba(67,160,71,.3)",
+                }}>{icon}</div>
                 <div>
-                  <div style={{ fontSize:14, fontWeight:600, marginBottom:3 }} className="text-green-800 dark:text-green-200">{text}</div>
-                  <div style={{ fontSize:12 }} className="text-green-900 dark:text-green-100">{sub}</div>
+                  <div style={{ fontSize:14, fontWeight:600, marginBottom:3, color:"#c8e6c9" }}>{text}</div>
+                  <div style={{ fontSize:12, color:"#81c784" }}>{sub}</div>
                 </div>
               </div>
             ))}
@@ -384,13 +383,15 @@ const HowItWorks = () => {
             display:"inline-flex", alignItems:"center", gap:7,
             padding:"5px 14px", borderRadius:99,
             marginBottom:16,
-          }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">
-            <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px" }} className="text-green-700 dark:text-green-300">How It Works</span>
+            background:"rgba(67,160,71,.15)",
+            border:"1px solid rgba(67,160,71,.3)",
+          }}>
+            <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px", color:"#81c784" }}>How It Works</span>
           </div>
-          <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1 }} className="text-green-800 dark:text-green-200">
+          <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1, color:"#c8e6c9" }}>
             From intent to impact<br/>in four steps
           </h2>
-          <p style={{ fontSize:16, maxWidth:480, margin:"0 auto" }} className="text-green-900 dark:text-green-100">
+          <p style={{ fontSize:16, maxWidth:480, margin:"0 auto", color:"#a5d6a7" }}>
             WasteZero makes it seamless for organizations and individuals to find each other and get to work.
           </p>
         </div>
@@ -398,24 +399,30 @@ const HowItWorks = () => {
         {/* Steps grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))", gap:20 }}>
           {steps.map(({ n, icon, title, desc }, i) => (
-            <div key={n} className={`step-card scroll-reveal ${inView ? "visible" : "hidden"} bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800`} style={{
+            <div key={n} className={`step-card scroll-reveal ${inView ? "visible" : "hidden"}`} style={{
               transitionDelay:`${i * 80}ms`,
               padding:"32px 28px", borderRadius:20,
               position:"relative", overflow:"hidden",
+              background:"rgba(255,255,255,.05)",
+              backdropFilter:"blur(12px)",
+              border:"1px solid rgba(67,160,71,.2)",
             }}>
               {/* Step number watermark */}
               <div style={{
                 position:"absolute", top:-10, right:16,
                 fontFamily:serif, fontSize:72, fontWeight:900,
                 lineHeight:1, userSelect:"none",
-              }} className="text-green-900/5 dark:text-green-100/5">{n}</div>
+                color:"rgba(255,255,255,.04)",
+              }}>{n}</div>
 
               <div style={{
                 width:44, height:44, borderRadius:12, marginBottom:16,
                 display:"flex", alignItems:"center", justifyContent:"center",
-              }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">{icon}</div>
-              <h3 style={{ fontFamily:serif, fontSize:18, fontWeight:700, margin:"0 0 12px" }} className="text-green-800 dark:text-green-200">{title}</h3>
-              <p style={{ fontSize:14, lineHeight:1.7, margin:0 }} className="text-green-900 dark:text-green-100">{desc}</p>
+                background:"rgba(67,160,71,.15)",
+                border:"1px solid rgba(67,160,71,.3)",
+              }}>{icon}</div>
+              <h3 style={{ fontFamily:serif, fontSize:18, fontWeight:700, margin:"0 0 12px", color:"#c8e6c9" }}>{title}</h3>
+              <p style={{ fontSize:14, lineHeight:1.7, margin:0, color:"#a5d6a7" }}>{desc}</p>
             </div>
           ))}
         </div>
@@ -428,7 +435,6 @@ const HowItWorks = () => {
 const Impact = () => {
   const [ref, inView] = useInView();
 
-  // Clean SVG icons — no emojis
   const impactIcons = {
     community: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
     recycle:    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#66bb6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>,
@@ -460,32 +466,39 @@ const Impact = () => {
             display:"inline-flex", alignItems:"center", gap:7,
             padding:"5px 14px", borderRadius:99,
             marginBottom:16,
-          }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">
-            <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px" }} className="text-green-700 dark:text-green-300">Our Impact</span>
+            background:"rgba(67,160,71,.15)",
+            border:"1px solid rgba(67,160,71,.3)",
+          }}>
+            <span style={{ fontSize:12, fontWeight:600, textTransform:"uppercase", letterSpacing:"1px", color:"#81c784" }}>Our Impact</span>
           </div>
-          <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1 }} className="text-green-800 dark:text-green-200">
+          <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 44px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1, color:"#c8e6c9" }}>
             Real change,<br/>
-            <span className="text-green-600 dark:text-[#66bb6a]">measurable results</span>
+            <span style={{ color:"#66bb6a" }}>measurable results</span>
           </h2>
-          <p style={{ fontSize:16, maxWidth:480, margin:"0 auto" }} className="text-green-900 dark:text-green-100">
+          <p style={{ fontSize:16, maxWidth:480, margin:"0 auto", color:"#a5d6a7" }}>
             Every connection made on WasteZero ripples outward into communities, ecosystems, and futures.
           </p>
         </div>
 
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:16 }}>
           {impacts.map(({ iconKey, title, desc }, i) => (
-            <div key={title} className={`impact-item scroll-reveal ${inView ? "visible" : "hidden"} bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800`} style={{
+            <div key={title} className={`impact-item scroll-reveal ${inView ? "visible" : "hidden"}`} style={{
               transitionDelay:`${i * 70}ms`,
               display:"flex", alignItems:"flex-start", gap:18,
               padding:"24px 22px", borderRadius:16,
+              background:"rgba(255,255,255,.05)",
+              backdropFilter:"blur(12px)",
+              border:"1px solid rgba(67,160,71,.2)",
             }}>
               <div style={{
                 width:44, height:44, borderRadius:12, flexShrink:0,
                 display:"flex", alignItems:"center", justifyContent:"center",
-              }} className="bg-green-100 dark:bg-green-900/40 border border-green-200 dark:border-green-800">{impactIcons[iconKey]}</div>
+                background:"rgba(67,160,71,.15)",
+                border:"1px solid rgba(67,160,71,.3)",
+              }}>{impactIcons[iconKey]}</div>
               <div>
-                <h4 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:"0 0 6px" }} className="text-green-800 dark:text-green-200">{title}</h4>
-                <p style={{ fontSize:13.5, lineHeight:1.65, margin:0 }} className="text-green-900 dark:text-green-100">{desc}</p>
+                <h4 style={{ fontFamily:serif, fontSize:16, fontWeight:700, margin:"0 0 6px", color:"#c8e6c9" }}>{title}</h4>
+                <p style={{ fontSize:13.5, lineHeight:1.65, margin:0, color:"#a5d6a7" }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -508,30 +521,33 @@ const CTABanner = () => {
       <div style={{
         position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
         width:700, height:400, borderRadius:"50%",
+        background:"radial-gradient(circle, rgba(46,125,50,.2) 0%, transparent 70%)",
         pointerEvents:"none",
-      }} className="bg-gradient-to-r from-green-500/10 to-transparent dark:from-green-500/20" />
+      }} />
 
       <div className={`scroll-reveal ${inView ? "visible" : "hidden"}`} style={{
         maxWidth:700, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1,
       }}>
-        <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 50px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1 }} className="text-green-800 dark:text-green-200">
+        <h2 style={{ fontFamily:serif, fontSize:"clamp(28px, 4vw, 50px)", fontWeight:900, margin:"0 0 16px", lineHeight:1.1, color:"#c8e6c9" }}>
           Ready to make a difference?
         </h2>
-        <p style={{ fontSize:17, lineHeight:1.7, margin:"0 0 44px" }} className="text-green-900 dark:text-green-100">
+        <p style={{ fontSize:17, lineHeight:1.7, margin:"0 0 44px", color:"#a5d6a7" }}>
           Join thousands of volunteers and NGOs already using WasteZero to build cleaner, more sustainable communities.
         </p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, justifyContent:"center" }}>
-          <button className="hero-btn bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white" onClick={() => navigate("/register?role=volunteer")} style={{
+          <button className="hero-btn" onClick={() => navigate("/register?role=volunteer")} style={{
             padding:"16px 32px", borderRadius:12,
+            background:"#43a047", color:"#fff",
             fontFamily:font, fontSize:16, fontWeight:700, border:"none",
             cursor:"pointer",
           }}>
             Join as Volunteer
           </button>
-          <button className="hero-btn bg-white/70 dark:bg-white/5 backdrop-blur-md border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-white/10" onClick={() => navigate("/register?role=ngo")} style={{
-            padding:"16px 32px", borderRadius:12,
-            fontFamily:font, fontSize:16, fontWeight:700,
-            cursor:"pointer",
+          <button className="hero-btn" onClick={() => navigate("/register?role=volunteer")} style={{
+            padding:"14px 28px", borderRadius:12,
+            background:"#43a047", color:"#fff",
+            fontFamily:font, fontSize:15, fontWeight:600, border:"none",
+            cursor:"pointer", display:"flex", alignItems:"center", gap:8,
           }}>
             Register Your NGO
           </button>
@@ -543,9 +559,10 @@ const CTABanner = () => {
 
 // ── footer ──
 const Footer = () => (
-  <footer className="relative z-10 border-t border-green-200 dark:border-green-800 bg-transparent" style={{
+  <footer className="relative z-10" style={{
     padding:"48px 48px 32px",
     fontFamily:font,
+    borderTop:"1px solid rgba(67,160,71,.15)",
   }}>
     <div style={{ maxWidth:1100, margin:"0 auto" }}>
       <div style={{ display:"flex", alignItems:"center", flexWrap:"wrap", gap:24, marginBottom:32 }}>
@@ -555,38 +572,44 @@ const Footer = () => (
           <div style={{
             width:32, height:32, borderRadius:8,
             display:"flex", alignItems:"center", justifyContent:"center",
-          }} className="bg-gradient-to-br from-green-500 to-green-800">
+            background:"linear-gradient(135deg, #43a047, #1b5e20)",
+          }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/>
               <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
             </svg>
           </div>
-          <span style={{ fontFamily:serif, fontSize:16, fontWeight:800 }} className="text-green-900 dark:text-white">WasteZero</span>
+          <span style={{ fontFamily:serif, fontSize:16, fontWeight:800, color:"#fff" }}>WasteZero</span>
         </div>
 
         {/* Center — Trademark */}
         <div style={{ flex:1, textAlign:"center" }}>
-          <span style={{ fontSize: 12 }} className="text-green-700 dark:text-green-300">
-            WasteZero™
-          </span>
+          <span style={{ fontSize:12, color:"#81c784" }}>WasteZero™</span>
         </div>
 
         {/* Right — links */}
         <div style={{ display:"flex", gap:20, justifyContent:"flex-end", flex:1 }}>
           {["Privacy", "Terms", "Contact"].map(l => (
-            <span key={l} style={{ fontSize:13, cursor:"pointer", transition:"color .2s" }}
-              className="text-green-800 dark:text-green-300 hover:text-green-600 dark:hover:text-green-100"
+            <span key={l} style={{ fontSize:13, cursor:"pointer", transition:"color .2s", color:"#81c784" }}
+              onMouseEnter={e => e.target.style.color="#c8e6c9"}
+              onMouseLeave={e => e.target.style.color="#81c784"}
             >{l}</span>
           ))}
+
         </div>
       </div>
     </div>
   </footer>
 );
+
 // ── main export ──
 const LandingPage = () => {
   return (
-    <div className="bg-gradient-to-b from-[#f3fdf6] via-[#e6f9ec] to-[#f3fdf6] dark:from-[#02140b] dark:via-[#052e16] dark:to-[#02140b] min-h-screen text-green-900 dark:text-green-100 transition-colors duration-300">
+    <div style={{
+      background:"linear-gradient(to bottom, #02140b, #052e16, #02140b)",
+      minHeight:"100vh",
+      color:"#a5d6a7",
+    }}>
       <Nav />
       <Hero />
       <Why />

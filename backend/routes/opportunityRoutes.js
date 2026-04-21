@@ -14,6 +14,7 @@ const {
   getMyApplications,
   applyToOpportunity,
   getOpportunityApplicants,
+  updateApplicationStatus,
 } = require("../controllers/opportunityController");
 
 // CREATE OPPORTUNITY (NGO only)
@@ -30,6 +31,10 @@ router.post("/:id/apply", authMiddleware, roleMiddleware("volunteer"), applyToOp
 
 // NGO: VIEW APPLICANTS WITH SKILL MATCH
 router.get("/:id/applicants", authMiddleware, roleMiddleware("ngo"), getOpportunityApplicants);
+
+// NGO: ACCEPT / REJECT AN APPLICANT
+// Must be defined before the generic /:id routes so it isn't swallowed by them
+router.patch("/:id/applicants/:volunteerId/status", authMiddleware, roleMiddleware("ngo"), updateApplicationStatus);
 
 // PUBLIC ROUTES
 router.get("/", getAllOpportunities);

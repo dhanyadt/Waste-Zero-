@@ -55,13 +55,13 @@ const Login = () => {
       }
 
       // Clear old session but keep theme preference
-      const currentTheme = localStorage.getItem("theme");
-      localStorage.clear();
-      if (currentTheme) localStorage.setItem("theme", currentTheme);
+      const currentTheme = sessionStorage.getItem("theme");
+      sessionStorage.clear();
+      if (currentTheme) sessionStorage.setItem("theme", currentTheme);
 
       // Save new session
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
 
       // Update React context
       updateUser(data.user);

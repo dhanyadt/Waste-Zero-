@@ -125,7 +125,7 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   const mainNav = [
-    { label: "Dashboard",     path: "/dashboard",     icon: <LayoutDashboard size={14} /> }, 
+    { label: "Dashboard",     path: "/dashboard",     icon: <LayoutDashboard size={14} /> },
     { label: "Opportunities", path: "/opportunities", icon: <Target size={14} /> },
     { label: "Messages",      path: "/messages",      icon: <MessageSquare size={14} /> },
     { label: "My Profile",    path: "/profile",       icon: <User size={14} /> },
@@ -172,7 +172,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* Main nav — 4 items only */}
+      {/* Nav */}
       <div style={S.navSection}>
         <p style={S.sectionLabel}>Main Menu</p>
         {mainNav.map(({ label, path, icon }) => (
@@ -191,23 +191,33 @@ const Sidebar = () => {
           >
             <div style={S.iconWrap(isActive(path))}>{icon}</div>
             <span style={{ flex: 1, textAlign: "left" }}>{label}</span>
-            {path === "/messages" && notificationCount > 0 && (
-              <span style={{
-                minWidth: 18, height: 18, padding: "0 6px", borderRadius: 999,
-                background: "rgba(239,68,68,.85)", color: "#fff",
-                fontSize: 11, fontWeight: 700,
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {notificationCount}
-              </span>
-            )}
+           {path === "/messages" && notificationCount > 0 && (
+  <span style={{
+    minWidth: 18, 
+    height: 18, 
+    padding: "0 6px", 
+    borderRadius: 999,
+    background: "#ef4444", // Solid red for better visibility
+    color: "#fff",
+    fontSize: 11, 
+    fontWeight: 700,
+    marginLeft: 'auto', // Pushes badge to the right end of the button
+    display: "inline-flex", 
+    alignItems: "center", 
+    justifyChild: "center",
+  }}>
+    {notificationCount}
+  </span>
+)}
           </button>
         ))}
+
+        {/* Theme toggle sits naturally after nav items */}
+        <ThemeToggle />
       </div>
 
       {/* Logout */}
       <div style={S.bottomSection}>
-        <ThemeToggle />
         <button style={S.logoutBtn}
           onClick={() => { logout(); navigate("/"); }}
           onMouseEnter={(e) => {

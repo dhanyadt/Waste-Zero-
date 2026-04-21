@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { getAllOpportunitiesForNgo, deleteOpportunity } from "../services/api";
-import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2, MessageSquare, Users } from "lucide-react";
-import { getOpportunityApplicants } from "../services/api";
+import { getAllOpportunitiesForNgo, deleteOpportunity, updateApplicationStatus } from "../services/api";
+import { Plus, Pencil, Trash2, MapPin, Clock, AlertTriangle, Building2, MessageSquare, Users, CheckCircle, XCircle } from "lucide-react";
 import API from "../services/api";
 
 const T = {
@@ -39,14 +38,70 @@ const css = `
   .btn-msg-volunteer:active { transform:translateY(0) !important; }
   .vol-row { transition: background .15s, transform .15s; }
   .vol-row:hover { background: rgba(46,125,50,.06) !important; transform: translateX(2px); }
+  .applicant-row { transition: background .15s; }
+  .applicant-row:hover { background: rgba(46,125,50,.04) !important; }
+  .btn-accept { transition: all .15s !important; }
+  .btn-accept:hover { opacity:.85 !important; transform:translateY(-1px) !important; }
+  .btn-reject { transition: all .15s !important; }
+  .btn-reject:hover { opacity:.85 !important; transform:translateY(-1px) !important; }
+
+  /* ── Applicant row responsive layout ── */
+  .applicant-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .applicant-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+  .applicant-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  /* Opportunity header wraps on small screens */
+  .opp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .opp-title-block { flex: 1 1 200px; min-width: 0; }
+  .opp-action-block {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 540px) {
+    .applicant-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .opp-action-block {
+      width: 100%;
+    }
+  }
 `;
 
 const StatusBadge = ({ status, darkMode }) => {
   const cfg = {
-    open:         { bg:"#dcfce7", color:"#15803d", dot:"#22c55e", label:"Open"        },
-    closed:       { bg:"#fee2e2", color:"#b91c1c", dot:"#ef4444", label:"Closed"      },
-    "in-progress":{ bg:"#fef9c3", color:"#a16207", dot:"#eab308", label:"In Progress" },
-  }[status] || { bg: darkMode ? "#333" : T.bPale, color: darkMode ? "#eee" : T.bLight, dot: darkMode ? "#888" : T.bSand, label:status };
+    open:   { bg:"#dcfce7", color:"#15803d", dot:"#22c55e", label:"Open"   },
+    closed: { bg:"#fee2e2", color:"#b91c1c", dot:"#ef4444", label:"Closed" },
+  }[status] || { bg: darkMode ? "#333" : T.bPale, color: darkMode ? "#eee" : T.bLight, dot: darkMode ? "#888" : T.bSand, label: status };
 
   return (
     <span style={{
@@ -56,6 +111,24 @@ const StatusBadge = ({ status, darkMode }) => {
       fontSize:12, fontWeight:700, letterSpacing:".1px", whiteSpace:"nowrap",
     }}>
       <span style={{ width:6, height:6, borderRadius:"50%", background:cfg.dot, flexShrink:0 }} />
+      {cfg.label}
+    </span>
+  );
+};
+
+const ApplicantStatusBadge = ({ status }) => {
+  const cfg = {
+    pending:  { bg:"#fef9c3", color:"#a16207", label:"Pending"  },
+    accepted: { bg:"#dcfce7", color:"#15803d", label:"Accepted" },
+    rejected: { bg:"#fee2e2", color:"#b91c1c", label:"Rejected" },
+  }[status] || { bg:"#f3f4f6", color:"#6b7280", label: status };
+
+  return (
+    <span style={{
+      padding:"3px 9px", borderRadius:20,
+      background:cfg.bg, color:cfg.color,
+      fontSize:11, fontWeight:700, whiteSpace:"nowrap",
+    }}>
       {cfg.label}
     </span>
   );
@@ -111,17 +184,17 @@ const NgoDashboard = () => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
   const navigate = useNavigate();
-  const [opportunities, setOpportunities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
+  const [opportunities, setOpportunities]   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState("");
+  const [deletingId, setDeletingId]         = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [oppToDelete, setOppToDelete] = useState(null);
-  const [matches, setMatches] = useState({});
-  const [conversations, setConversations] = useState([]);
-  const [convoLoading, setConvoLoading] = useState(true);
+  const [oppToDelete, setOppToDelete]       = useState(null);
+  const [matches, setMatches]               = useState({});
+  const [conversations, setConversations]   = useState([]);
+  const [convoLoading, setConvoLoading]     = useState(true);
+  const [updatingApplicant, setUpdatingApplicant] = useState(null);
 
-  // ✅ Aggregate top volunteers across all opportunities, deduplicated by volunteer _id
   const topVolunteers = Object.values(matches)
     .flat()
     .reduce((acc, m) => {
@@ -144,9 +217,11 @@ const NgoDashboard = () => {
 
   const fetchOpportunities = async () => {
     try {
+      setLoading(true);
       const response = await getAllOpportunitiesForNgo();
       const opps = response.data.opportunities || [];
       setOpportunities(opps);
+
       const matchData = {};
       for (let opp of opps) {
         const matched = await fetchMatchesForOpp(opp._id);
@@ -180,7 +255,7 @@ const NgoDashboard = () => {
     }
   }, [authLoading, user]);
 
-  const handleDeleteClick = (opp) => { setOppToDelete(opp); setShowDeleteModal(true); };
+  const handleDeleteClick  = (opp) => { setOppToDelete(opp); setShowDeleteModal(true); };
 
   const handleConfirmDelete = async () => {
     if (!oppToDelete) return;
@@ -197,6 +272,33 @@ const NgoDashboard = () => {
     }
   };
 
+  const handleUpdateApplicantStatus = async (opportunityId, volunteerId, status) => {
+    const key = `${opportunityId}-${volunteerId}`;
+    setUpdatingApplicant(key);
+    try {
+      await updateApplicationStatus(opportunityId, volunteerId, status);
+      setOpportunities(prev =>
+        prev.map(opp => {
+          if (opp._id !== opportunityId) return opp;
+          return {
+            ...opp,
+            applicants: opp.applicants.map(a =>
+              a.user?._id?.toString() === volunteerId.toString() ||
+              a.user?.toString() === volunteerId.toString()
+                ? { ...a, status }
+                : a
+            ),
+          };
+        })
+      );
+    } catch (err) {
+      console.error("Failed to update applicant status:", err);
+      setError(err.response?.data?.message || "Failed to update applicant status");
+    } finally {
+      setUpdatingApplicant(null);
+    }
+  };
+
   if (authLoading || loading) return (
     <div style={{
       display:"flex", alignItems:"center", justifyContent:"center",
@@ -208,10 +310,9 @@ const NgoDashboard = () => {
   );
 
   const stats = [
-    { label:"Total",       value:opportunities.length,                                     accent:T.bMid   },
-    { label:"Open",        value:opportunities.filter(o=>o.status==="open").length,         accent:T.gDark  },
-    { label:"In Progress", value:opportunities.filter(o=>o.status==="in-progress").length,  accent:"#eab308"},
-    { label:"Closed",      value:opportunities.filter(o=>o.status==="closed").length,       accent:"#ef4444"},
+    { label:"Total",  value:opportunities.length,                               accent:T.bMid    },
+    { label:"Open",   value:opportunities.filter(o=>o.status==="open").length,  accent:T.gDark   },
+    { label:"Closed", value:opportunities.filter(o=>o.status==="closed").length,accent:"#ef4444" },
   ];
 
   const orgInfo = [
@@ -222,10 +323,7 @@ const NgoDashboard = () => {
   ];
 
   return (
-    <div style={{
-      display:"flex", minHeight:"100vh", fontFamily:font,
-      color: darkMode ? "#eee" : "#000"
-    }}>
+    <div style={{ display:"flex", minHeight:"100vh", fontFamily:font, color: darkMode ? "#eee" : "#000" }}>
       <style>{css}</style>
       <Sidebar />
       <main style={{ flex:1, padding:"40px 36px", overflowY:"auto", position:"relative" }}>
@@ -292,7 +390,7 @@ const NgoDashboard = () => {
           </div>
         </div>
 
-        {/* ✅ RECOMMENDED VOLUNTEERS CARD */}
+        {/* Recommended Volunteers */}
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
@@ -324,8 +422,8 @@ const NgoDashboard = () => {
                   padding:"12px 14px", borderRadius:12,
                   border:`1px solid ${darkMode ? "#444" : T.bSand}`,
                   background: darkMode ? "#2a2a2a" : T.bPale,
+                  flexWrap:"wrap",
                 }}>
-                  {/* Avatar */}
                   <div style={{
                     width:40, height:40, borderRadius:10, flexShrink:0,
                     background:`linear-gradient(135deg, ${T.gMid}, ${T.gDark})`,
@@ -334,8 +432,6 @@ const NgoDashboard = () => {
                   }}>
                     {m.volunteer.name?.charAt(0).toUpperCase() || "V"}
                   </div>
-
-                  {/* Info */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14, fontWeight:700, color: darkMode ? "#fff" : T.bDark }}>
                       {m.volunteer.name}
@@ -357,8 +453,6 @@ const NgoDashboard = () => {
                       ))}
                     </div>
                   </div>
-
-                  {/* Match score + Message */}
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
                     <span style={{
                       fontSize:12, fontWeight:700, color:"#15803d",
@@ -370,10 +464,7 @@ const NgoDashboard = () => {
                     <button
                       className="btn-msg-volunteer"
                       onClick={() => navigate("/messages", {
-                        state: {
-                          preSelectUserId: m.volunteer._id,
-                          preSelectUserName: m.volunteer.name,
-                        }
+                        state: { preSelectUserId: m.volunteer._id, preSelectUserName: m.volunteer.name }
                       })}
                       style={{
                         padding:"6px 13px",
@@ -392,7 +483,7 @@ const NgoDashboard = () => {
           )}
         </div>
 
-        {/* CONVERSATIONS PANEL */}
+        {/* Conversations */}
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
@@ -423,10 +514,7 @@ const NgoDashboard = () => {
                   key={convo.user._id}
                   className="convo-row"
                   onClick={() => navigate("/messages", {
-                    state: {
-                      preSelectUserId: convo.user._id,
-                      preSelectUserName: convo.user.name,
-                    }
+                    state: { preSelectUserId: convo.user._id, preSelectUserName: convo.user.name }
                   })}
                   style={{
                     display:"flex", alignItems:"center", gap:14,
@@ -446,10 +534,7 @@ const NgoDashboard = () => {
                     <div style={{ fontSize:14, fontWeight:600, color: darkMode ? "#fff" : T.bDark }}>
                       {convo.user.name || "Volunteer"}
                     </div>
-                    <div style={{
-                      fontSize:12, color: darkMode ? "#aaa" : T.textSoft,
-                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
-                    }}>
+                    <div style={{ fontSize:12, color: darkMode ? "#aaa" : T.textSoft, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                       {convo.lastMessage || "No messages yet"}
                     </div>
                   </div>
@@ -488,7 +573,7 @@ const NgoDashboard = () => {
           </button>
         </div>
 
-        {/* Opportunities */}
+        {/* Opportunities List */}
         <div className="ngo-card" style={{
           borderRadius:18, background: darkMode ? "#1e1e1e" : "#fff",
           border:`1px solid ${darkMode ? "#555" : T.bSand}`,
@@ -527,15 +612,17 @@ const NgoDashboard = () => {
                   animationDelay:`${0.2 + i*0.04}s`,
                   color: darkMode ? "#eee" : T.textDark,
                 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:8 }}>
-                    <div style={{ flex:1, minWidth:0 }}>
+
+                  {/* Title + action buttons — wraps on small screens */}
+                  <div className="opp-header">
+                    <div className="opp-title-block">
                       <h3 style={{ margin:"0 0 3px", fontSize:15, fontWeight:700, color: darkMode ? "#fff" : T.bDark }}>{opp.title}</h3>
                       <p style={{
                         margin:0, fontSize:13, color: darkMode ? "#ccc" : T.textMid, lineHeight:1.5,
                         display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden",
                       }}>{opp.description}</p>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0 }}>
+                    <div className="opp-action-block">
                       <StatusBadge status={opp.status} darkMode={darkMode} />
                       <button className="btn-edit" onClick={() => navigate(`/edit-opportunity/${opp._id}`)}
                         disabled={deletingId === opp._id}
@@ -543,8 +630,7 @@ const NgoDashboard = () => {
                           display:"inline-flex", alignItems:"center", gap:5,
                           padding:"6px 11px", borderRadius:8,
                           border:`1.5px solid ${T.gSage}`, background:T.gPale,
-                          color:T.gDark, fontSize:12, fontWeight:600,
-                          cursor:"pointer", fontFamily:font,
+                          color:T.gDark, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font,
                         }}>
                         <Pencil size={11} /> Edit
                       </button>
@@ -554,15 +640,14 @@ const NgoDashboard = () => {
                           display:"inline-flex", alignItems:"center", gap:5,
                           padding:"6px 11px", borderRadius:8,
                           border:"1.5px solid #fecaca", background:"#fef2f2",
-                          color:"#c62828", fontSize:12, fontWeight:600,
-                          cursor:"pointer", fontFamily:font,
+                          color:"#c62828", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:font,
                         }}>
                         <Trash2 size={11} /> {deletingId === opp._id ? "…" : "Delete"}
                       </button>
                     </div>
                   </div>
 
-                  {/* ✅ Skills tags — untouched */}
+                  {/* Skills tags */}
                   {opp.requiredSkills?.length > 0 && (
                     <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:8 }}>
                       {opp.requiredSkills.map((skill, idx) => (
@@ -575,7 +660,136 @@ const NgoDashboard = () => {
                     </div>
                   )}
 
-                  <div style={{ display:"flex", gap:14, fontSize:12, color: darkMode ? "#ccc" : T.textSoft }}>
+                  {/* ── APPLICANTS PANEL ── */}
+                  {opp.applicants?.length > 0 && (
+                    <div style={{
+                      marginTop:12, padding:"14px 16px",
+                      background: darkMode ? "#333" : "#f8fdf8",
+                      borderRadius:12,
+                      border:`1px solid ${darkMode ? "#444" : T.gSage}`,
+                    }}>
+                      {/* Panel header */}
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:10 }}>
+                        <Users size={13} color={darkMode ? "#81c784" : T.gDark} />
+                        <span style={{ fontSize:12, fontWeight:700, color: darkMode ? "#81c784" : T.gDark, textTransform:"uppercase", letterSpacing:".6px" }}>
+                          Applicants ({opp.applicants.length})
+                        </span>
+                      </div>
+
+                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                        {opp.applicants.map((applicant) => {
+                          const volunteerId = applicant.user?._id || applicant.user;
+                          const key = `${opp._id}-${volunteerId}`;
+                          const isBusy = updatingApplicant === key;
+
+                          return (
+                            <div key={String(volunteerId)} className="applicant-row" style={{
+                              padding:"10px 12px", borderRadius:10,
+                              background: darkMode ? "#3a3a3a" : "#fff",
+                              border:`1px solid ${darkMode ? "#555" : T.bSand}`,
+                            }}>
+                              {/*
+                                Responsive inner layout:
+                                - Row on ≥541px (avatar + name on left, badges + buttons on right)
+                                - Stacks to two lines on <540px via flex-wrap
+                              */}
+                              <div className="applicant-inner">
+
+                                {/* Avatar + name */}
+                                <div className="applicant-info">
+                                  <div style={{
+                                    width:32, height:32, borderRadius:8, flexShrink:0,
+                                    background:`linear-gradient(135deg, ${T.gMid}40, ${T.gDark}30)`,
+                                    display:"flex", alignItems:"center", justifyContent:"center",
+                                    fontSize:13, fontWeight:700, color: darkMode ? "#81c784" : T.gDark,
+                                  }}>
+                                    {(applicant.name || applicant.user?.name || "?").charAt(0).toUpperCase()}
+                                  </div>
+                                  <div style={{ minWidth:0 }}>
+                                    <div style={{ fontSize:13.5, fontWeight:600, color: darkMode ? "#fff" : T.bDark, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                                      {applicant.name || applicant.user?.name || "Volunteer"}
+                                    </div>
+                                    {applicant.location && (
+                                      <div style={{ fontSize:11, color: darkMode ? "#aaa" : T.textSoft, display:"flex", alignItems:"center", gap:3, marginTop:2 }}>
+                                        <MapPin size={9} /> {applicant.location}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Status badge + action buttons */}
+                                <div className="applicant-actions">
+                                  <ApplicantStatusBadge status={applicant.status} />
+
+                                  {applicant.status === "pending" && (
+                                    <>
+                                      <button
+                                        className="btn-accept"
+                                        disabled={isBusy}
+                                        onClick={() => handleUpdateApplicantStatus(opp._id, volunteerId, "accepted")}
+                                        style={{
+                                          display:"inline-flex", alignItems:"center", gap:4,
+                                          padding:"5px 11px", borderRadius:7, border:"none",
+                                          background:"#16a34a", color:"#fff",
+                                          fontSize:12, fontWeight:600,
+                                          cursor: isBusy ? "wait" : "pointer",
+                                          opacity: isBusy ? 0.6 : 1, fontFamily:font,
+                                          whiteSpace:"nowrap",
+                                        }}
+                                      >
+                                        <CheckCircle size={12} />
+                                        {isBusy ? "…" : "Accept"}
+                                      </button>
+                                      <button
+                                        className="btn-reject"
+                                        disabled={isBusy}
+                                        onClick={() => handleUpdateApplicantStatus(opp._id, volunteerId, "rejected")}
+                                        style={{
+                                          display:"inline-flex", alignItems:"center", gap:4,
+                                          padding:"5px 11px", borderRadius:7, border:"none",
+                                          background:"#dc2626", color:"#fff",
+                                          fontSize:12, fontWeight:600,
+                                          cursor: isBusy ? "wait" : "pointer",
+                                          opacity: isBusy ? 0.6 : 1, fontFamily:font,
+                                          whiteSpace:"nowrap",
+                                        }}
+                                      >
+                                        <XCircle size={12} />
+                                        {isBusy ? "…" : "Reject"}
+                                      </button>
+                                    </>
+                                  )}
+
+                                  <button
+                                    onClick={() => navigate("/messages", {
+                                      state: {
+                                        preSelectUserId: String(volunteerId),
+                                        preSelectUserName: applicant.name || applicant.user?.name || "Volunteer",
+                                      }
+                                    })}
+                                    style={{
+                                      display:"inline-flex", alignItems:"center", gap:4,
+                                      padding:"5px 11px", borderRadius:7, border:"none",
+                                      background: darkMode ? "#2e7d32" : T.gPale,
+                                      color: darkMode ? "#fff" : T.gDark,
+                                      fontSize:12, fontWeight:600, cursor:"pointer",
+                                      fontFamily:font, whiteSpace:"nowrap",
+                                    }}
+                                  >
+                                    <MessageSquare size={12} /> Message
+                                  </button>
+                                </div>
+
+                              </div>{/* /applicant-inner */}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Location / duration footer */}
+                  <div style={{ display:"flex", gap:14, fontSize:12, color: darkMode ? "#ccc" : T.textSoft, marginTop:10, flexWrap:"wrap" }}>
                     {opp.location && <span style={{ display:"flex", alignItems:"center", gap:4 }}><MapPin size={11} />{opp.location}</span>}
                     {opp.duration && <span style={{ display:"flex", alignItems:"center", gap:4 }}><Clock size={11} />{opp.duration}</span>}
                   </div>

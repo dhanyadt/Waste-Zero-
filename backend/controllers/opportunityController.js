@@ -94,11 +94,15 @@ exports.getAllOpportunities = async (req, res) => {
 
 /* ─────────────────────────────
    GET MY OPPORTUNITIES (NGO)
+   Populates applicants so the
+   dashboard can render names
+   and statuses immediately.
 ───────────────────────────── */
 exports.getMyOpportunities = async (req, res) => {
   try {
     const opportunities = await Opportunity.find({ createdBy: req.user._id })
       .populate("createdBy", "name email role")
+      .populate("applicants.user", "name email location skills")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, opportunities });
@@ -164,12 +168,12 @@ exports.updateOpportunity = async (req, res) => {
 
     const { title, description, requiredSkills, duration, location, status } = req.body;
 
-    opportunity.title = title || opportunity.title;
+    opportunity.title       = title       || opportunity.title;
     opportunity.description = description || opportunity.description;
     opportunity.requiredSkills = requiredSkills || opportunity.requiredSkills;
-    opportunity.duration = duration || opportunity.duration;
-    opportunity.location = location || opportunity.location;
-    opportunity.status = status || opportunity.status;
+    opportunity.duration    = duration    || opportunity.duration;
+    opportunity.location    = location    || opportunity.location;
+    opportunity.status      = status      || opportunity.status;
 
     await opportunity.save();
 
@@ -259,12 +263,12 @@ exports.applyToOpportunity = async (req, res) => {
       });
     }
 
-    opportunity.applicants.push({ 
-      user: userId, 
+    opportunity.applicants.push({
+      user: userId,
       name: name || req.user.name,
       location: location || req.user.location,
       skills: skills || [],
-      status: "pending" 
+      status: "pending",
     });
 
     await opportunity.save();
@@ -282,7 +286,7 @@ exports.applyToOpportunity = async (req, res) => {
 
 
 /* ─────────────────────────────
-   GET MY APPLICATIONS
+   GET MY APPLICATIONS (Volunteer)
 ───────────────────────────── */
 exports.getMyApplications = async (req, res) => {
   try {
@@ -309,7 +313,7 @@ exports.getMyApplications = async (req, res) => {
         ngo: opp.ngo,
         createdBy: opp.createdBy,
         createdByType: opp.createdByType,
-        applicationStatus: application.status,
+        applicationStatus: application.status,  // "pending" | "accepted" | "rejected"
         appliedAt: application.appliedAt,
       };
     });
@@ -321,6 +325,7 @@ exports.getMyApplications = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /* ─────────────────────────────
    GET APPLICANTS WITH SKILL MATCH
@@ -339,42 +344,93 @@ exports.getOpportunityApplicants = async (req, res) => {
       });
     }
 
-      const oppSkills = (opportunity.requiredSkills || []).map(s => s.toLowerCase());
+    const oppSkills = (opportunity.requiredSkills || []).map((s) => s.toLowerCase());
 
-const applicants = opportunity.applicants.map((app) => {
+    const applicants = opportunity.applicants.map((app) => {
+      const volunteerSkills = (app.skills || []).map((s) => s.toLowerCase());
+      const matchedSkills   = volunteerSkills.filter((skill) => oppSkills.includes(skill));
+      const matchPercent    = oppSkills.length > 0
+        ? Math.round((matchedSkills.length / oppSkills.length) * 100)
+        : 0;
 
-  const volunteerSkills = (app.skills || []).map(s => s.toLowerCase());
+      return {
+        user: app.user,
+        name: app.name,
+        location: app.location,
+        skills: volunteerSkills,
+        matchedSkills,
+        matchPercent,
+        status: app.status,
+      };
+    });
 
-  const matchedSkills = volunteerSkills.filter(skill =>
-    oppSkills.includes(skill)
-  );
-
-  const matchPercent =
-    oppSkills.length > 0
-      ? Math.round((matchedSkills.length / oppSkills.length) * 100)
-      : 0;
-
-  return {
-    user: app.user,
-    name: app.name,
-    location: app.location,
-    skills: volunteerSkills,
-    matchedSkills,
-    matchPercent,
-    status: app.status,
-  };
-});
-
-    // Sort best match first
     applicants.sort((a, b) => b.matchPercent - a.matchPercent);
 
-    res.status(200).json({
-      success: true,
-      applicants,
-    });
+    res.status(200).json({ success: true, applicants });
 
   } catch (error) {
     console.error("Get Applicants Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+/* ─────────────────────────────
+   UPDATE APPLICATION STATUS
+   PATCH /opportunities/:id/applicants/:volunteerId/status
+   Body: { status: "accepted" | "rejected" | "pending" }
+───────────────────────────── */
+exports.updateApplicationStatus = async (req, res) => {
+  try {
+    const { id, volunteerId } = req.params;
+    const { status } = req.body;
+
+    if (!["accepted", "rejected", "pending"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be 'accepted', 'rejected', or 'pending'",
+      });
+    }
+
+    if (!isValidId(id) || !isValidId(volunteerId)) {
+      return res.status(400).json({ success: false, message: "Invalid ID" });
+    }
+
+    // Verify the opportunity belongs to this NGO
+    const opportunity = await Opportunity.findOne({
+      _id: id,
+      createdBy: req.user._id,
+    });
+
+    if (!opportunity) {
+      return res.status(404).json({
+        success: false,
+        message: "Opportunity not found or you don't own it",
+      });
+    }
+
+    // Find the specific applicant subdocument and update it
+    const applicant = opportunity.applicants.find(
+      (a) => a.user.toString() === volunteerId.toString()
+    );
+
+    if (!applicant) {
+      return res.status(404).json({
+        success: false,
+        message: "Applicant not found for this opportunity",
+      });
+    }
+
+    applicant.status = status;
+    await opportunity.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Volunteer ${status} successfully`,
+    });
+
+  } catch (error) {
+    console.error("Update Application Status Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -5,26 +5,33 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        Loading...
+      </div>
+    );
   }
 
-  const token = localStorage.getItem("token");
-  const savedUser = localStorage.getItem("user");
+  // Check sessionStorage instead of localStorage
+  const token = sessionStorage.getItem("token");
+  const savedUser = sessionStorage.getItem("user");
 
-  if (!user && (!token || !savedUser)) {
-    return <Navigate to="/" replace />;
+  // If no session exists in THIS specific tab
+  if (!token || !savedUser) {
+    return <Navigate to="/login" replace />;
   }
 
-  const userRole = user.role?.toLowerCase();
+  const currentUser = user || JSON.parse(savedUser);
+  const userRole = currentUser?.role?.toLowerCase();
 
-  // If route has role restriction
+  // Role validation for THIS tab
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Redirect based on actual role
-    if (userRole === "ngo") {
-      return <Navigate to="/ngo-dashboard" replace />;
-    } else {
-      return <Navigate to="/volunteer-dashboard" replace />;
-    }
+    const roleHomeBase = {
+      admin: "/admin",
+      ngo: "/ngo-dashboard",
+      volunteer: "/volunteer-dashboard"
+    };
+    return <Navigate to={roleHomeBase[userRole] || "/"} replace />;
   }
 
   return children;

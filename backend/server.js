@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const passport = require("passport");
+// const passport = require("passport");
 
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
@@ -10,7 +10,7 @@ const helmet = require("helmet");
 const http = require("http");
 const { Server } = require("socket.io");
 
-require("./config/passport");
+// require("./config/passport");
 
 const matchRoutes = require("./routes/matchRoutes");
 const messageRoutes = require("./routes/messageRoutes");
@@ -58,12 +58,12 @@ app.set("users", users);
 app.use(helmet());
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: true,
   credentials: true
 }));
 
 app.use(express.json());
-app.use(passport.initialize());
+// app.use(passport.initialize());
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));

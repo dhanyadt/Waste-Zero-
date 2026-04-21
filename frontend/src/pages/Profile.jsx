@@ -278,7 +278,7 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/auth/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -303,7 +303,7 @@ const Profile = () => {
     if (newPassword !== confirmPassword)
       return setPasswordMessage({ text: "New passwords do not match", type: "error" });
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/auth/change-password", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

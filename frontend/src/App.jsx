@@ -32,138 +32,136 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-      <BrowserRouter>
-        <div className="main-bg">
-          <Routes>
+        <BrowserRouter>
+          <div className="main-bg">
+            <Routes>
 
-            {/* PUBLIC */}
-            <Route path="/" element={<LandingPage />} />
+              {/* PUBLIC */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+              {/* DASHBOARD SELECTION */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardSelect />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* DASHBOARD */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardSelect />
-                </ProtectedRoute>
-              }
-            />
+              {/* NGO ROUTES */}
+              <Route
+                path="/ngo-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["ngo"]}>
+                    <NgoDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* NGO */}
-            <Route
-              path="/ngo-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["ngo"]}>
-                  <NgoDashboard />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/create-opportunity"
+                element={
+                  <ProtectedRoute allowedRoles={["ngo"]}>
+                    <CreateOpportunity />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/create-opportunity"
-              element={
-                <ProtectedRoute allowedRoles={["ngo"]}>
-                  <CreateOpportunity />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/edit-opportunity/:id"
+                element={
+                  <ProtectedRoute allowedRoles={["ngo"]}>
+                    <EditOpportunity />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/edit-opportunity/:id"
-              element={
-                <ProtectedRoute allowedRoles={["ngo"]}>
-                  <EditOpportunity />
-                </ProtectedRoute>
-              }
-            />
+              {/* VOLUNTEER ROUTES */}
+              <Route
+                path="/volunteer-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["volunteer"]}>
+                    <VolunteerDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* VOLUNTEER */}
-            <Route
-              path="/volunteer-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["volunteer"]}>
-                  <VolunteerDashboard />
-                </ProtectedRoute>
-              }
-            />
+              {/* SHARED PROTECTED ROUTES */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* SHARED */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/opportunities"
+                element={
+                  <ProtectedRoute>
+                    <Opportunities />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/opportunities"
-              element={
-                <ProtectedRoute>
-                  <Opportunities />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/opportunities/:id"
+                element={
+                  <ProtectedRoute>
+                    <Opportunities />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/opportunities/:id"
-              element={
-                <ProtectedRoute>
-                  <Opportunities />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/matches"
+                element={
+                  <ProtectedRoute>
+                    <Matches />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/matches"
-              element={
-                <ProtectedRoute>
-                  <Matches />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/messages"
-              element={
-                <ProtectedRoute>
-                  <Messages />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/messages/:receiverId"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/messages/:receiverId"
-              element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* ADMIN ROUTES */}
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/opportunities" element={<AdminRoute><AdminOpportunities /></AdminRoute>} />
+              <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+              <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
 
-            {/* ADMIN  */}
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-            <Route path="/admin/opportunities" element={<AdminRoute><AdminOpportunities /></AdminRoute>} />
-            <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
-            <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
+              {/* OTHERS */}
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/select-role" element={<SelectRole />} />
 
-            {/* OTHERS */}
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/select-role" element={<SelectRole />} />
+              {/* CATCH ALL */}
+              <Route path="*" element={<Navigate to="/" />} />
 
-            {/* CATCH ALL */}
-            <Route path="*" element={<Navigate to="/" />} />
-
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

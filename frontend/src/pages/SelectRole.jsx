@@ -46,8 +46,9 @@ const SelectRole = () => {
 
   const handleSubmit = async () => {
     setIsLoading(true);
+
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/users/set-role", {
         method: "PUT",
         headers: {
@@ -59,9 +60,9 @@ const SelectRole = () => {
       const data = await res.json();
 
       if (data.success) {
-        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const savedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
         const updatedUser = { ...savedUser, role: data.role };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
         updateUser(updatedUser);
         setTimeout(() => navigate("/dashboard"), 100);
       } else {

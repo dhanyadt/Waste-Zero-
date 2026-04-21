@@ -11,12 +11,9 @@ exports.getMatches = async (req, res) => {
   try {
     const volunteer = await User.findById(req.user._id);
 
-    if (!volunteer || volunteer.role !== "volunteer") {
-      return res.status(403).json({
-        success: false,
-        message: "Only volunteers can view matches",
-      });
-    }
+if (!volunteer || volunteer.role !== "volunteer" || volunteer.status === "suspended") {
+  return res.status(403).json({ success: false, message: "Account suspended" });
+}
 
     const opportunities = await Opportunity.find({ status: "open" })
       .populate("createdBy", "name email");
@@ -73,8 +70,7 @@ exports.getMatchedVolunteers = async (req, res) => {
       });
     }
 
-    const volunteers = await User.find({ role: "volunteer" });
-
+const volunteers = await User.find({ role: "volunteer", status: { $ne: "suspended" } });
     const matched = volunteers
       .map((vol) => {
         const result = calculateMatchScore(vol, opportunity);

@@ -30,9 +30,9 @@ const AuthCallback = () => {
       }
     }
 
-    localStorage.setItem("token", token);
+    sessionStorage.setItem("token", token);
     if (user) {
-      localStorage.setItem("user", JSON.stringify(user)); // ✅ இது add pannu
+      sessionStorage.setItem("user", JSON.stringify(user)); // ✅ இது add pannu
       updateUser(user);
     }
 

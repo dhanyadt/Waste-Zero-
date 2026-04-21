@@ -106,12 +106,14 @@ const S = {
 
 const adminNav = [
   { label: "Dashboard",            path: "/admin",               icon: <LayoutDashboard size={14} /> },
-  { label: "My Profile",           path: "/profile",             icon: <User size={14} /> },
   { label: "Manage Users",         path: "/admin/users",         icon: <Users size={14} /> },
   { label: "Manage Opportunities", path: "/admin/opportunities", icon: <Target size={14} /> },
   { label: "Reports",              path: "/admin/reports",       icon: <TrendingUp size={14} /> },
   { label: "Logs",                 path: "/admin/logs",          icon: <ScrollText size={14} /> },
+    { label: "My Profile",           path: "/profile",             icon: <User size={14} /> },
+
 ];
+
 
 const AdminSidebar = () => {
   const { user, logout } = useAuth();
@@ -193,11 +195,13 @@ const AdminSidebar = () => {
             {isActive(path) && <ChevronRight size={12} color="rgba(255,255,255,.4)" />}
           </button>
         ))}
+
+        {/* Theme toggle sits naturally after nav items */}
+        <ThemeToggle />
       </div>
 
       {/* Logout */}
       <div style={S.bottomSection}>
-        <ThemeToggle />
         <button
           style={S.logoutBtn}
           onClick={() => { logout(); navigate("/"); }}

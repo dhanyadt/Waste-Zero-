@@ -54,7 +54,7 @@ exports.sendMessage = async (req, res) => {
     });
 
     // OPTIONAL NOTIFICATION EVENT
-    io.to(receiver_id).emit("newNotification", {
+    io.to(receiver_id.toString()).emit("newNotification", {
       type: "message",
       senderId: req.user._id,
       message: "New message received",

@@ -18,7 +18,7 @@ const serif = "'Fraunces', serif";
 const SKILLS_OPTIONS = [
   "Teaching", "Event Planning", "Fundraising", "Social Media",
   "Content Writing", "Graphic Design", "Photography", "Video Editing",
-  "Web Development", "Data Analysis", "Community Outreach",
+  "Teamwork", "Community Outreach",
   "Project Management", "Public Speaking", "Research", "Translation",
 ];
 

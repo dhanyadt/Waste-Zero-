@@ -121,6 +121,10 @@ const VolunteerDashboard = () => {
     { label:"Role", value:"Volunteer" },
   ];
 
+  const acceptedCount = applications?.filter(app => 
+    app.applicants?.some(a => a.user === user?._id && a.status === "accepted")
+  ).length || 0;
+
   return (
     <div style={{
       display:"flex", minHeight:"100vh", fontFamily:font,
