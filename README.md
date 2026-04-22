@@ -58,16 +58,22 @@ models/ → MongoDB schemas
 
 ## Installation
 
-git clone https://github.com/your-username/waste-zero-feb-team01.git
+### Clone the repository
+git clone https://github.com/dhanyadt/Waste-Zero-.git  
+cd Waste-Zero-
 
-cd waste-zero-feb-team01
-
+### Install dependencies
 cd backend
 npm install
+
+cd frontend
+npm install
+
+### Run the project 
+cd backend
 node server.js
 
-cd ../frontend
-npm install
+cd frontend
 npm run dev
 
 
