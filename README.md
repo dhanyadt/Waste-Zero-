@@ -1,93 +1,73 @@
 # 🌱 WasteZero – NGO & Volunteer Opportunity Platform
 
-## 📌 Overview
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![Node](https://img.shields.io/badge/Backend-Node.js-green)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-darkgreen)
+![Socket.IO](https://img.shields.io/badge/Realtime-Socket.IO-black)
+![Status](https://img.shields.io/badge/Status-Live-success)
 
-WasteZero is a full-stack web application designed to connect NGOs with volunteers for waste management and sustainability initiatives.
-The platform enables NGOs to create opportunities and allows volunteers to discover, apply, and participate in activities like clean-up drives, recycling programs, and awareness campaigns.
+## Live Demo
 
+https://waste-zero-five.vercel.app
 
+---
 
-## 🚀 Features
+## Overview
 
-* 👤 **Role-Based Access Control (RBAC)** for Admin, NGO, and Volunteer
-* 📋 **Opportunity Management** (Create, Edit, Delete, Apply)
-* 🔐 **Secure Authentication** using JWT
-* 🔄 **Real-Time Communication** using WebSockets (Socket.IO)
-* 📊 **Dashboards** for NGOs and Volunteers
-* 🌍 **Location-based Opportunities** with structured data
+WasteZero is a full-stack web application that connects NGOs with volunteers for waste management and sustainability initiatives. The platform enables NGOs to create opportunities and allows volunteers to discover, apply, and participate in activities such as clean-up drives, recycling programs, and awareness campaigns.
 
+---
 
-## 🛠️ Tech Stack
+## Features
 
-**Frontend:** React.js, HTML, CSS
-**Backend:** Node.js, Express.js
-**Database:** MongoDB
-**Authentication:** JWT
-**Real-Time:** Socket.IO
-**Tools:** Git, Postman
+- Role-Based Access Control (Admin, NGO, Volunteer)  
+- Opportunity Management (Create, Edit, Delete, Apply)  
+- Secure Authentication using JWT  
+- Real-time updates using Socket.IO  
+- Separate dashboards for NGOs and Volunteers  
+- Structured and location-based opportunities  
 
+---
 
-## ⚙️ How It Works
+## Tech Stack
 
-1. Users register as NGO or Volunteer
-2. NGOs create and manage opportunities
-3. Volunteers browse and apply for opportunities
-4. Real-time updates are handled using WebSockets
-5. Admin manages users and platform activities
+React.js, Node.js, Express.js, MongoDB, JWT, Socket.IO, HTML, CSS, Git, Postman, Vercel, Render
 
 
-## 🔌 WebSocket Integration
+---
 
-* Implemented using **Socket.IO**
-* Enables real-time updates for:
+## How It Works
 
-  * User-specific notifications
-  * Application status updates
-* Uses **room-based communication** for targeted messaging
+1. Users register as NGO or Volunteer  
+2. NGOs create and manage opportunities  
+3. Volunteers browse and apply  
+4. Real-time updates using WebSockets  
+5. Admin manages platform activities  
 
+---
 
-## 📁 Project Structure
+## Project Structure
 
-```
-- /frontend   → React application
-- /backend    → Node.js + Express server
-- /routes     → API routes
-- /controllers → Business logic
-- /models     → MongoDB schemas
-```
+frontend/ → React application
+backend/ → Node.js and Express server
+routes/ → API routes
+controllers/ → Business logic
+models/ → MongoDB schemas
 
+---
 
-## 📦 Installation
+## Installation
 
-### 1. Clone the repository
-
-```
 git clone https://github.com/your-username/waste-zero-feb-team01.git
+
 cd waste-zero-feb-team01
 
-```
-
-### 2. Install dependencies
-
-```
 cd backend
 npm install
-
-cd ../frontend
-npm install
-```
-
-### 3. Run the project
-
-```
-cd backend
 node server.js
 
 cd ../frontend
+npm install
 npm run dev
-```
-
-
-
 
 
